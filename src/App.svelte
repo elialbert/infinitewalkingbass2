@@ -1,4 +1,6 @@
 <script lang="ts">
+  import * as Tonal from '@tonaljs/tonal'
+  window.t = Tonal
 	export let name: string;
 </script>
 
