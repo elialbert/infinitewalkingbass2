@@ -6,7 +6,7 @@ it('determines current chord', () => {
   let sw = new SongWriter()
   sw.progA = ['IIm7', 'V7', 'IMaj7']
   sw.key = 'C'
-  const s = new Section(sw, 'a')
+  const s = new Section(sw, 'a', 0)
   s.chordsToBars = [2, 2, 4]
   const l = new Line(s, 0)
   expect(s.progression[0]).toEqual('Dm7')
@@ -18,7 +18,7 @@ it('determines another chord', () => {
   let sw = new SongWriter()
   sw.progA = ['IIm7', 'V7', 'IMaj7']
   sw.key = 'C'
-  const s = new Section(sw, 'a')
+  const s = new Section(sw, 'a', 0)
   s.chordsToBars = [2, 2, 4]
   const l = new Line(s, 0)
   expect(l.currentChord(2)).toEqual('G7')
@@ -28,7 +28,7 @@ it('determines another chord', () => {
   let sw = new SongWriter()
   sw.progA = ['IIm7', 'V7', 'IMaj7']
   sw.key = 'C'
-  const s = new Section(sw, 'a')
+  const s = new Section(sw, 'a', 0)
   s.chordsToBars = [2, 2, 4]
   const l = new Line(s, 0)
   expect(l.currentChord(1)).toEqual('Dm7')
@@ -38,7 +38,7 @@ it('generates beats in bars', () => {
   let sw = new SongWriter()
   sw.progA = ['IIm7', 'V7', 'IMaj7']
   sw.key = 'C'
-  const s = new Section(sw, 'a')
+  const s = new Section(sw, 'a', 0)
   s.chordsToBars = [2, 2, 4]
   s.barsPerLine = 4
   const l = new Line(s, 1)

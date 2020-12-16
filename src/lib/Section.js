@@ -1,9 +1,10 @@
 import Line from './Line.js'
 
 class Section {
-  constructor(song, part) {
+  constructor(song, part, sectionIdx) {
     this.song = song
     this.part = part
+    this.sectionIdx = sectionIdx
 
     this.lineCount = part == 'a' ? 2 : 3
     this.lines = []
@@ -11,6 +12,14 @@ class Section {
     this.progression = part == 'a' ? this.song.chordProgA : this.song.chordProgB
     this.chordCount = this.progression.length
     this.chordsToBars = this.generateChordsToBars()
+  }
+
+  nextLine(lineIdx) {
+    if (this.lines[lineIdx + 1]) { return this.lines[lineIdx + 1]}
+    if (this.song.nextSection(this.sectionIdx)) {
+      return this.song.nextSection(this.sectionIdx).lines[0]
+    }
+    return null
   }
 
   generateChordsToBars() {

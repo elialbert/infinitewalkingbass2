@@ -20,17 +20,24 @@ class SongWriter {
     this.chordProgB = Progression.fromRomanNumerals(this.key, this.progB)
   }
 
+  nextSection(sectionIdx) {
+    if (sectionIdx == 0) { return this.sectionB }
+    if (sectionIdx == 1) { return this.sectionC }
+  }
+
   generate() {
-    this.sectionA = new Section(this, 'a')
-    this.sectionB = new Section(this, 'b')
+    this.sectionA = new Section(this, 'a', 0)
+    this.sectionB = new Section(this, 'b', 1)
+    this.sectionC = new Section(this, 'a', 2)
 
     this.sectionA.generate()
     this.sectionB.generate()
+    this.sectionC.generate()
   }
 
   gather() {
     return [
-      this.sectionA.gather(), this.sectionB.gather(), this.sectionA.gather()
+      this.sectionA.gather(), this.sectionB.gather(), this.sectionC.gather()
     ].flat()
   }
 }

@@ -31,6 +31,11 @@ class Line {
     return this.section.progression[chordIndex]
   }
 
+  nextBar(barIdx) {
+    return this.bars[barIdx + 1] ||
+      this.section.nextLine(lineIdx).bars[0]
+  }
+
   generate() {
     Array(this.section.barsPerLine).fill(1).map((_, barIdx) => {
       // bar we are currently at in the section calculated as

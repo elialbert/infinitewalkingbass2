@@ -8,13 +8,23 @@ class Bar {
     this.barIdx = barIdx // spot in line
     this.key = this.line.section.song.key
     this.beats = []
+    this.notes = Chord.get(this.chord).notes
+  }
+
+  firstNote() {
+    return this.notes[0]
+  }
+
+  lastNote() {
+
   }
 
   generate() {
-    const notes = Chord.get(this.chord).notes
     Array(4).fill(1).map((_, beatIdx) => {
       let beat = new Beat(this, beatIdx)
-      beat.generate(notes[beatIdx])
+      // just pass in the root note on this pass
+      // actual note choosing logic on gather pass
+      beat.generate(this.notes[beatIdx])
       this.beats.push(beat)
     })
   }
