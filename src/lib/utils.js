@@ -21,3 +21,28 @@ function shuffleArray(array) {
     }
     return array
 }
+
+// take a array of values and an array of respective integer probabilities that sum to 100
+// choose a value at random weighted by the array of probabilities
+function chooseWithProbabilities(values, probabilities, randFunc) {
+  if (!randFunc) {
+    randFunc = getRandomIntInclusive
+  }
+  let randVal = randFunc(1, 100)
+  let chosenSum = 0
+  let result = null
+  probabilities.forEach(function(prob, chosenIdx) {
+    chosenSum += prob
+    if (!result) {
+      if (chosenSum >= randVal) {
+        result = values[chosenIdx]
+      }
+    }
+  })
+  return result || result[result.length - 1]
+}
+
+const utils = {
+  chooseWithProbabilities: chooseWithProbabilities
+}
+export default utils

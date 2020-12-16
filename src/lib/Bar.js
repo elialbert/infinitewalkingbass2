@@ -9,6 +9,12 @@ class Bar {
     this.key = this.line.section.song.key
     this.beats = []
     this.notes = Chord.get(this.chord).notes
+    this.nextBar = this.line.nextBar(this.barIdx)
+    if (this.nextBar) {
+      this.nextChord = this.nextBar.chord
+    } else {
+      this.nextChord = this.chord
+    }
   }
 
   firstNote() {
@@ -16,7 +22,9 @@ class Bar {
   }
 
   lastNote() {
-
+    if (this.chord != this.nextChord) {
+      let nextNote = Chord.get(this.nextChord).notes[0]
+    }
   }
 
   generate() {
