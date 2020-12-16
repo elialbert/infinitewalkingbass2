@@ -10,6 +10,10 @@ class Beat {
     this.note = note
   }
 
+  chooseNote(note) {
+    this.note = note
+  }
+
   gather() {
     return [this.note]
   }

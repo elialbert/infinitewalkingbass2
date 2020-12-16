@@ -32,8 +32,20 @@ class Line {
   }
 
   nextBar(barIdx) {
-    return this.bars[barIdx + 1] ||
-      this.section.nextLine(lineIdx).bars[0]
+    if (this.bars[barIdx + 1]) {
+      return this.bars[barIdx + 1]
+    }
+    if (this.section.nextLine(this.lineIdx)) {
+      return this.section.nextLine(this.lineIdx).bars[0]
+    }
+    return null
+  }
+
+  lastBar(barIdx) {
+    if (barIdx !== 0) {
+      return this.bars[barIdx - 1]
+    }
+    return null
   }
 
   generate() {
@@ -44,6 +56,7 @@ class Line {
       // console.log('line work', barIdx, sectionBarIdx, curChord)
       let bar = new Bar(this, curChord, barIdx)
       bar.generate()
+      bar.lastBar = this.lastBar(barIdx)
       this.bars.push(bar)
     })
   }

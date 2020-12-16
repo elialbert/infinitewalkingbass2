@@ -48,3 +48,10 @@ it('chooses by probability distribution', () => {
   result = utils.chooseWithProbabilities([1, 2, 3, 4, 5], [10, 20, 30, 30, 10], randFunc)
   expect(result).toEqual(5)
 })
+
+
+it('chooses a random scale from a chord', () => {
+  let result = utils.chooseScale('Dm7')
+  expect(result).not.toBe(undefined)
+  expect(result).not.toBe(null)
+})

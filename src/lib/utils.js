@@ -1,6 +1,4 @@
-/**************************************************
- * Utilities functions
- **************************************************/
+import { Chord, Note } from '@tonaljs/tonal'
 
 // Returns a random integer between min (included) and max (included)
 // Using Math.round() will give you a non-uniform distribution!
@@ -42,7 +40,15 @@ function chooseWithProbabilities(values, probabilities, randFunc) {
   return result || result[result.length - 1]
 }
 
+const acceptableScales = ["ionian pentatonic", "lydian pentatonic", "augmented", "lydian", "augmented heptatonic",
+  "harmonic major", "major", "bebop", "bebop major"]
+function chooseScale(chord) {
+  return randFromArray(Chord.chordScales(chord) && acceptableScales)
+}
+
 const utils = {
-  chooseWithProbabilities: chooseWithProbabilities
+  chooseWithProbabilities: chooseWithProbabilities,
+  chooseScale: chooseScale,
+  randFromArray: randFromArray
 }
 export default utils
