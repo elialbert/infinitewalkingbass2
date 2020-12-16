@@ -46,9 +46,29 @@ function chooseScale(chord) {
   return randFromArray(Chord.chordScales(chord) && acceptableScales)
 }
 
+function chooseTwoRandomElementsInOrder(arr) {
+  let c1 = randFromArray(arr)
+  let c2 = randFromArray(arr)
+  if (arr.indexOf(c1) <= arr.indexOf(c2)) {
+    return [c1, c2]
+  } else {
+    return [c2, c1]
+  }
+}
+
+function appendOctaveInteger(v, octave) {
+  if (!octave) { octave = '4'}
+  if (!/\d$/.test(v)) {
+    v = `${v}${octave}`
+  }
+  return v
+}
+
 const utils = {
   chooseWithProbabilities: chooseWithProbabilities,
   chooseScale: chooseScale,
-  randFromArray: randFromArray
+  randFromArray: randFromArray,
+  chooseTwoRandomElementsInOrder: chooseTwoRandomElementsInOrder,
+  appendOctaveInteger: appendOctaveInteger
 }
 export default utils

@@ -1,5 +1,5 @@
 import Beat from './Beat.js'
-import { Chord, Note, Scale } from '@tonaljs/tonal'
+import { Chord, Note, Scale, Interval } from '@tonaljs/tonal'
 import utils from './utils.js'
 
 class Bar {
@@ -13,12 +13,6 @@ class Bar {
     if (!this.notes[3]) {
       this.notes[3] = this.notes[0]
     }
-    this.nextBar = this.line.nextBar(this.barIdx)
-    if (this.nextBar) {
-      this.nextChord = this.nextBar.chord
-    } else {
-      this.nextChord = this.chord
-    }
   }
 
   firstNote() {
@@ -26,29 +20,35 @@ class Bar {
   }
 
   lastNote() {
+    // console.log('running last note ', !!this.nextBar, this.chord, this.nextChord)
     if (this.chord != this.nextChord) {
       const newNotes = Chord.get(this.nextChord).notes
       const options = [newNotes[0], newNotes[1], newNotes[2]]
-      this.nextBarFirstNote = `${utils.chooseWithProbabilities(options, [70, 15, 15])}4`
+      this.nextBarFirstNote = utils.appendOctaveInteger(utils.chooseWithProbabilities(options, [70, 15, 15]))
+      // console.log('next bar first is ', this.nextBarFirstNote)
       const noteBelow = Note.transpose(this.nextBarFirstNote, '-2m')
       const noteAbove = Note.transpose(this.nextBarFirstNote, '2m')
       const noteDominantBelow = Note.transpose(this.nextBarFirstNote, '-4M')
-      let chosen = null
-      [noteBelow, noteAbove, noteDominantBelow].some(function(attempt) {
-        if (this.notes.includes(attempt)) {
+      // console.log('choose from ', noteBelow, noteAbove, noteDominantBelow)
+      let chosen;
+      [noteBelow, noteAbove, noteDominantBelow].some( (attempt) => {
+        // do not include octave in comparison
+        if (this.notes.includes(attempt.substring(0, attempt.length - 1))) {
           chosen = attempt
           return true
         }
       })
       if (!chosen) {
         chosen = utils.chooseWithProbabilities(
-          [noteBelow, noteAbove, noteDominantBelow, this.notes[3], this.notes[2], this.notes[1]],
+          [noteBelow, noteAbove, noteDominantBelow,
+            utils.appendOctaveInteger(this.notes[3]), utils.appendOctaveInteger(this.notes[2]), utils.appendOctaveInteger(this.notes[1])],
           [20, 20, 15, 15, 15, 15])
       }
-      return `${chosen}4`
+
+      return utils.appendOctaveInteger(chosen)
     } else {
       const options = [this.notes[0], this.notes[1], this.notes[2]]
-      this.nextBarFirstNote = `${utils.chooseWithProbabilities(options, [70, 15, 15])}4`
+      this.nextBarFirstNote = utils.appendOctaveInteger(utils.chooseWithProbabilities(options, [70, 15, 15]))
       const noteBelow = Note.transpose(this.notes[0], '-2m')
       const noteAbove = Note.transpose(this.notes[0], '2m')
       const noteDominantBelow = Note.transpose(this.notes[0], '-4M')
@@ -56,7 +56,7 @@ class Bar {
       const choice = utils.chooseWithProbabilities(
         [noteBelow, noteAbove, noteDominantBelow, noteDominantAbove, this.notes[3], this.notes[2], this.notes[1]],
         [20, 20, 20, 10, 10, 10, 10])
-      return `${choice}4`
+      return utils.appendOctaveInteger(choice)
     }
   }
 
@@ -64,15 +64,25 @@ class Bar {
   notesBetween() {
     const chosenScale = utils.chooseScale(this.chord)
     const rangeFinder = Scale.rangeOf(`${this.key} ${chosenScale}`)
+    if (Interval.semitones(Interval.distance(this.chosenFirstNote, this.chosenLastNote)) < 5) {
+      this.chosenLastNote = Note.transpose(this.chosenLastNote, '8M')
+    }
     const noteRange = rangeFinder(this.chosenFirstNote, this.chosenLastNote)
-    return [utils.randFromArray(noteRange) || utils.randFromArray(this.notes), utils.randFromArray(noteRange) || utils.randFromArray(this.notes)]
+    return utils.chooseTwoRandomElementsInOrder(noteRange)
   }
 
   chooseNotes() {
+    this.nextBar = this.line.nextBar(this.barIdx)
+    if (this.nextBar) {
+      this.nextChord = this.nextBar.chord
+    } else {
+      this.nextChord = this.chord
+    }
+    // console.log('working with ', this.chord, this.notes)
     this.chosenFirstNote = this.firstNote()
     this.chosenLastNote = this.lastNote()
     this.chosenNotesBetween = this.notesBetween()
-    console.log('choosing notes', this.chosenFirstNote, this.chosenLastNote, this.chosenNotesBetween)
+    // console.log('choosing notes', this.chosenFirstNote, this.chosenLastNote, this.chosenNotesBetween)
     this.beats[0].chooseNote(this.chosenFirstNote)
     this.beats[3].chooseNote(this.chosenLastNote)
     this.beats[1].chooseNote(this.chosenNotesBetween[0])
@@ -87,6 +97,7 @@ class Bar {
       beat.generate(this.notes[beatIdx])
       this.beats.push(beat)
     })
+
   }
 
   gather() {
