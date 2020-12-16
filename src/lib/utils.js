@@ -57,7 +57,7 @@ function chooseTwoRandomElementsInOrder(arr) {
 }
 
 function appendOctaveInteger(v, octave) {
-  if (!octave) { octave = '4'}
+  if (!octave) { octave = '2'}
   if (!/\d$/.test(v)) {
     v = `${v}${octave}`
   }

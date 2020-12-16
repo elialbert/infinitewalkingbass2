@@ -16,7 +16,7 @@ class Bar {
   }
 
   firstNote() {
-    return (this.lastBar && this.lastBar.nextBarFirstNote) || `${this.notes[0]}4`
+    return (this.lastBar && this.lastBar.nextBarFirstNote) || utils.appendOctaveInteger(this.notes[0])
   }
 
   lastNote() {
