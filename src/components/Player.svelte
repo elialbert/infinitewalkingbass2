@@ -11,10 +11,10 @@
   // 	}).toDestination();
 
   var bass = new Tone.MonoSynth({
-    volume: 0,
-    frequency: 'C1',
+    volume: 10,
+    frequency: 'C2',
     oscillator: {
-      type: 'square'
+      type: 'triangle'
     },
     envelope: {
       attack: 0.005,
@@ -24,21 +24,21 @@
     }
   })//.toDestination()
 
-  // var reverb = new Tone.Reverb({decay: 0.3})
-  // var tremelo = new Tone.Tremolo({
-  //   frequency: 100,
-  //   type: 'sine',
-  //   depth: 1,
-  //   spread: 15,
-  //   wet: 0
-  // })
+  var reverb = new Tone.Reverb({decay: 0.3})
+  var tremelo = new Tone.Tremolo({
+    frequency: 10,
+    type: 'sine',
+    depth: 1,
+    spread: 4,
+    wet: 0
+  })
   const bassFilter = new Tone.Filter(100, 'lowpass');
   const eq = new Tone.EQ3({
-    lowLevel: 200,
-    midLevel: 40,
+    lowLevel: 20,
+    midLevel: 0,
     highLevel: -20
   })
-  bass.chain(bassFilter, eq, Tone.Destination)
+  bass.chain(eq, reverb, tremelo, Tone.Destination)
   // bass.chain(bassFilter, tremelo, reverb)//.toDestination();
 
   const sw = new SongWriter()
@@ -47,7 +47,7 @@
   let playing = false;
   let buttonText = 'Play'
 
-  Tone.Transport.bpm.value = 70;
+  Tone.Transport.bpm.value = 50;
 
   sw.notes = sw.gather()
   let notesToPlay = sw.flatten(sw.notes)

@@ -4,6 +4,7 @@ import * as Tonal from '@tonaljs/tonal'
 window.t = Tonal
 const acceptableScales = ["ionian pentatonic", "lydian pentatonic", "lydian",
   "harmonic major", "major", "bebop", "bebop major", "chromatic"]
+// const acceptableScales = ['bebop']
 
   function chooseScale(chord) {
   return utils.randFromArray(Chord.chordScales(chord) && acceptableScales)
