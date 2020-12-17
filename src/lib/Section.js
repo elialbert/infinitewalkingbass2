@@ -15,7 +15,6 @@ class Section {
     // this.barsPerLine = 1
     // this.lineCount = 2
 
-
     this.progression = part == 'a' ? this.song.chordProgA : this.song.chordProgB
     this.chordCount = this.progression.length
     this.chordsToBars = this.generateChordsToBars()

@@ -104,8 +104,6 @@
       callback: (time, note) => {
         currentBeatNumber += 1
         // console.log('playing', note, currentBeatNumber, time, Tone.Transport.seconds)
-
-        // bell.triggerAttack(note, time, 0);
         bass.triggerAttackRelease(note,
                                   '8n',
                                   time);
@@ -138,8 +136,9 @@
     }).length
     loop = makeLoop(notesToPlay)
     if (time) {
-      // console.log('ready', time, loop, Tone.Transport.seconds, Tone.Transport.nextSubdivision('32n'))
-      loop.start(time)
+      Tone.Transport.seconds = time
+      // console.log('ready', time, loop, Tone.Transport.seconds, )
+      loop.start(Tone.Transport.nextSubdivision('8n'))
     }
   }
   restart()
