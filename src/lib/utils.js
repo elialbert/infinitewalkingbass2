@@ -1,5 +1,3 @@
-import { Chord, Note } from '@tonaljs/tonal'
-
 // Returns a random integer between min (included) and max (included)
 // Using Math.round() will give you a non-uniform distribution!
 function getRandomIntInclusive(min, max) {
@@ -37,13 +35,7 @@ function chooseWithProbabilities(values, probabilities, randFunc) {
       }
     }
   })
-  return result || result[result.length - 1]
-}
-
-const acceptableScales = ["ionian pentatonic", "lydian pentatonic", "augmented", "lydian", "augmented heptatonic",
-  "harmonic major", "major", "bebop", "bebop major"]
-function chooseScale(chord) {
-  return randFromArray(Chord.chordScales(chord) && acceptableScales)
+  return result || values[values.length - 1]
 }
 
 function chooseTwoRandomElementsInOrder(arr) {
@@ -56,19 +48,9 @@ function chooseTwoRandomElementsInOrder(arr) {
   }
 }
 
-function appendOctaveInteger(v, octave) {
-  if (!octave) { octave = '2'}
-  if (!/\d$/.test(v)) {
-    v = `${v}${octave}`
-  }
-  return v
-}
-
 const utils = {
   chooseWithProbabilities: chooseWithProbabilities,
-  chooseScale: chooseScale,
   randFromArray: randFromArray,
-  chooseTwoRandomElementsInOrder: chooseTwoRandomElementsInOrder,
-  appendOctaveInteger: appendOctaveInteger
+  chooseTwoRandomElementsInOrder: chooseTwoRandomElementsInOrder
 }
 export default utils

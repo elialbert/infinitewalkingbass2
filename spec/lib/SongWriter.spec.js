@@ -24,5 +24,5 @@ it('gathers notes as result', () => {
   sw.chordProgA = Progression.fromRomanNumerals(sw.key, sw.progA)
   sw.chordProgB = Progression.fromRomanNumerals(sw.key, sw.progB)
   sw.generate()
-  console.log(sw.gather())
+  sw.gather()
 })
