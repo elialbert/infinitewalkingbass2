@@ -14,7 +14,7 @@
     volume: 10,
     frequency: 'C2',
     oscillator: {
-      type: 'triangle'
+      type: 'square4'
     },
     envelope: {
       attack: 0.005,
@@ -24,6 +24,19 @@
     }
   })//.toDestination()
 
+  var bass2 = new Tone.MonoSynth({
+    volume: -10,
+    frequency: 'C2',
+    oscillator: {
+      type: 'fmsine'
+    },
+    envelope: {
+      attack: 0.005,
+      decay: 0.991,
+      sustain: 0.001,
+      release: .001
+    }
+  }).toDestination()
   var reverb = new Tone.Reverb({decay: 0.3})
   var tremelo = new Tone.Tremolo({
     frequency: 10,
@@ -48,7 +61,7 @@
   let playing = false;
   let buttonText = 'Play'
 
-  Tone.Transport.bpm.value = 50;
+  Tone.Transport.bpm.value = 60;
 
   sw.notes = sw.gather()
   let notesToPlay = sw.flatten(sw.notes)
@@ -65,6 +78,9 @@
     bass.triggerAttackRelease(note,
                               '8n',
                               time);
+    bass2.triggerAttackRelease(note,
+      '8n',
+      time);
 
     }), notesToPlay, "8n");
 
