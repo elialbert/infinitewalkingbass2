@@ -40,7 +40,6 @@ const progressions = [
   ['IMaj7', 'VIm7', 'IIm7', 'V7'],
   ['IIm7', 'VI7', 'IIm7', 'V7'],
   ['IMaj7', 'IMaj7', 'IIm7', 'V7'],
-  ['IMaj7', 'I#d7', 'IIm7', 'II#d7', 'IIIm7', 'VI7'],
   ['Imaj7', 'IIm7', 'V7', 'IVmaj7']
 ]
 
