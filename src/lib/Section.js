@@ -39,7 +39,7 @@ class Section {
   gather() {
     return this.lines.map(function(line) {
       return line.gather()
-    }).flat()
+    })
   }
 }
 

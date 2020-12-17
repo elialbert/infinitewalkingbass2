@@ -35,10 +35,18 @@ class SongWriter {
     this.sectionC.generate()
   }
 
+  sections() {
+    return [this.sectionA, this.sectionB, this.sectionC]
+  }
+
   gather() {
     return [
       this.sectionA.gather(), this.sectionB.gather(), this.sectionC.gather()
-    ].flat()
+    ]
+  }
+
+  flatten(d) {
+    return d.flat().flat().flat()
   }
 }
 

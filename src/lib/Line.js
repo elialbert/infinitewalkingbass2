@@ -64,7 +64,7 @@ class Line {
   gather() {
     return this.bars.map(function(bar) {
       return bar.gather()
-    }).flat()
+    })
   }
 }
 
