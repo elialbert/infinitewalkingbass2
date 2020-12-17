@@ -4,11 +4,42 @@
   import Score from './Score.svelte'
 
 
-  var bass = new Tone.PolySynth(Tone.Synth, {
-			oscillator: {
-				partials: [0, 2, 3, 4],
-			}
-		}).toDestination();
+  // var bass = new Tone.PolySynth(Tone.Synth, {
+	// 		oscillator: {
+	// 			partials: [0, 2, 3, 4],
+	// 		}
+  // 	}).toDestination();
+
+  var bass = new Tone.MonoSynth({
+    volume: 0,
+    frequency: 'C1',
+    oscillator: {
+      type: 'square'
+    },
+    envelope: {
+      attack: 0.005,
+      decay: 0.991,
+      sustain: 0.01,
+      release: .004
+    }
+  })//.toDestination()
+
+  // var reverb = new Tone.Reverb({decay: 0.3})
+  // var tremelo = new Tone.Tremolo({
+  //   frequency: 100,
+  //   type: 'sine',
+  //   depth: 1,
+  //   spread: 15,
+  //   wet: 0
+  // })
+  const bassFilter = new Tone.Filter(100, 'lowpass');
+  const eq = new Tone.EQ3({
+    lowLevel: 200,
+    midLevel: 40,
+    highLevel: -20
+  })
+  bass.chain(bassFilter, eq, Tone.Destination)
+  // bass.chain(bassFilter, tremelo, reverb)//.toDestination();
 
   const sw = new SongWriter()
   sw.generate()
