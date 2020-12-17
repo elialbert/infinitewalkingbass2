@@ -1,10 +1,13 @@
+import utils from './utils.js'
+import { Note } from '@tonaljs/tonal'
+
 class Beat {
   constructor(bar, beatIdx) {
     this.bar = bar
     this.beatIdx = beatIdx
     this.onlyRoot = true
-    this.beatNumber = bar.line.section.song.beatCounter;
-    this.bar.line.section.song.beatCounter += 1;
+    this.octaveBounce = utils.chooseWithProbabilities(['8M', '-8M', 'no'], [5, 5, 90])
+    this.triplet = false
   }
 
   // actual note choosing logic happens during second pass ie gather
@@ -17,7 +20,22 @@ class Beat {
   }
 
   gather() {
-    return [this.note]
+    this.beatNumbers = [this.bar.line.section.song.beatCounter];
+    this.bar.line.section.song.beatCounter += 1;
+    if (this.octaveBounce !== 'no') {
+      this.bar.line.section.song.beatCounter += 1;
+      this.beatNumbers.push(this.bar.line.section.song.beatCounter)
+      return [this.note, null, null, Note.transpose(this.note, this.octaveBounce)]
+    } else if (this.triplet) {
+      this.bar.line.section.song.beatCounter += 1;
+      this.beatNumbers.push(this.bar.line.section.song.beatCounter)
+      this.bar.line.section.song.beatCounter += 1;
+      this.beatNumbers.push(this.bar.line.section.song.beatCounter)
+      // note included in triplet
+      return this.triplet
+    } else {
+      return [this.note]
+    }
   }
 }
 

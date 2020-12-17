@@ -17,7 +17,7 @@
           <span class='bar flex-child' class:green={bar.direction == 'up'} class:yellow={bar.direction == 'down'}>
             {#each bar.beats as beat}
               <span class='beat'>
-                <span class:red={currentBeatNumber == beat.beatNumber}>{beat.note}</span> |
+                <span class:red={beat.beatNumbers.includes(currentBeatNumber)}>{beat.note}</span> |
               </span>
             {/each}
           </span>

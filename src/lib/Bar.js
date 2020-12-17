@@ -1,7 +1,7 @@
 import Beat from './Beat.js'
 import { Chord } from '@tonaljs/tonal'
 import NoteChooser from './NoteChooser.js'
-import musicUtils from './musicUtils.js'
+import TripletChooser from './TripletChooser.js'
 
 class Bar {
   constructor(line, chord, barIdx) {
@@ -61,6 +61,7 @@ class Bar {
     this.beats[3].chooseNote(this.chosenLastNote)
     this.beats[1].chooseNote(this.chosenNotesBetween[0])
     this.beats[2].chooseNote(this.chosenNotesBetween[1])
+    this.tripletChooser = new TripletChooser(this)
   }
 
   generate() {

@@ -51,11 +51,11 @@ class NoteChooser {
       const rangeFinder = Scale.rangeOf(`${this.key} ${this.chosenScale}`)
       let noteRange
       if (this.direction == 'up') {
-        let minJump = Note.transpose(this.chosenFirstNote, '3m')
+        let minJump = Note.transpose(this.chosenFirstNote, '2m')
         let maxJump = Note.transpose(this.chosenFirstNote, '8M')
         noteRange = rangeFinder(minJump, maxJump)
       } else {
-        let minJump = Note.transpose(this.chosenFirstNote, '-3m')
+        let minJump = Note.transpose(this.chosenFirstNote, '-2m')
         let maxJump = Note.transpose(this.chosenFirstNote, '-8M')
         noteRange = rangeFinder(minJump, maxJump)
       }
@@ -64,6 +64,7 @@ class NoteChooser {
     }
 
     this.nextBarFirstNoteCallback(nextBarFirstNote)
+    this.nextBarFirstNote = nextBarFirstNote
     return nextBarFirstNote
   }
 
@@ -119,7 +120,7 @@ class NoteChooser {
   notesBetween() {
     let rangeFinder = Scale.rangeOf(`${this.key} ${this.chosenScale}`)
     let chosenLastNoteToUse = this.chosenLastNote
-    if (this.chosenFirstNote == this.chosenLastNote) {
+    if (musicUtils.semiDistance(this.chosenFirstNote, chosenLastNoteToUse) == 0) {
       chosenLastNoteToUse = Note.transpose(this.chosenLastNote, '5M')
     }
     if (musicUtils.semiDistance(this.chosenFirstNote, chosenLastNoteToUse) < 2) {
@@ -140,6 +141,8 @@ class NoteChooser {
     if (this.direction == 'down') {
       noteRange = noteRange.reverse()
     }
+
+    if (noteRange.length == 0) { noteRange = rangeFinder(this.chosenFirstNote, this.nextBarFirstNote) }
     let r = utils.chooseTwoRandomElementsInOrder(noteRange)
     console.log('picking notes from ', this.chosenFirstNote, chosenLastNoteToUse ,this.chosenScale, noteRange, r)
     return r

@@ -45,10 +45,10 @@ it('next bar first note', () => {
 
   nc = prep('C7', 'C7', null, 'C', 'down')
   expect(nc.firstNote()).toEqual('C2')
-  expect(nc.runNextBarFirstNote()).toEqual('A1')
+  expect(nc.runNextBarFirstNote()).toEqual('Ab1')
 
   setRandom(0.5)
   nc = prep('Dm7', 'Dm7', null, 'C', 'down')
   expect(nc.firstNote()).toEqual('D2')
-  expect(nc.runNextBarFirstNote()).toEqual('D1')
+  expect(nc.runNextBarFirstNote()).toEqual('Eb1')
 })

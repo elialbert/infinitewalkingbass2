@@ -2,7 +2,7 @@ import utils from './utils.js'
 import { Chord, Interval } from '@tonaljs/tonal'
 import * as Tonal from '@tonaljs/tonal'
 window.t = Tonal
-const acceptableScales = ["ionian pentatonic", "lydian pentatonic", "major", "minor", 'minor pentatonic',
+const acceptableScales = ["major", "minor", 'minor pentatonic',
   'major blues', 'minor blues', 'harmonic minor', 'melodic minor', 'bebop', 'bebop minor', 'bebop major',
   'minor bebop']
 // const acceptableScales = ['bebop']
