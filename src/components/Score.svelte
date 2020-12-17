@@ -4,6 +4,7 @@
 </script>
 
 <div class='score'>
+  <!-- <div>{currentBeatNumber}</div> -->
   {#each songWriter.sections() as section}
     <div class='section'>Section: {section.part}</div>
     {#each section.lines as line}
