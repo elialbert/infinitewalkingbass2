@@ -17,8 +17,8 @@
         {#each line.bars as bar}
           <span class='bar flex-child'>
             {#each bar.beats as beat}
-              <span class='beat' class:red={currentBeatNumber == beat.beatNumber}>
-                {beat.note} |
+              <span class='beat'>
+                <span class:red={currentBeatNumber == beat.beatNumber}>{beat.note}</span> |
               </span>
             {/each}
           </span>

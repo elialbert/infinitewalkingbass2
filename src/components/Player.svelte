@@ -3,6 +3,7 @@
   import SongWriter from './../lib/SongWriter.js'
   import Score from './Score.svelte'
 
+
   var bass = new Tone.PolySynth(Tone.Synth, {
 			oscillator: {
 				partials: [0, 2, 3, 4],
@@ -27,11 +28,12 @@
 
   let loop = new Tone.Sequence(((time, note) => {
     console.log('playing', note)
+    currentBeatNumber += 1
     bell.triggerAttack(note, time, 0);
     bass.triggerAttackRelease(note,
                               '8n',
                               time);
-    currentBeatNumber += 1
+
     }), notesToPlay, "8n");
 
   function togglePlay() {

@@ -2,6 +2,7 @@ import Beat from './Beat.js'
 import { Chord, Note, Scale, Interval } from '@tonaljs/tonal'
 import utils from './utils.js'
 import musicUtils from './musicUtils.js'
+import NoteChooser from './NoteChooser.js'
 
 class Bar {
   constructor(line, chord, barIdx) {
@@ -16,69 +17,41 @@ class Bar {
     }
   }
 
+  nextBarFirstNoteCallback = (note) => {
+    this.nextBarFirstNote = note
+  }
+
   firstNote() {
-    return (this.lastBar && this.lastBar.nextBarFirstNote) || musicUtils.appendOctaveInteger(this.notes[0])
+    return this.noteChooser.firstNote()
   }
 
   lastNote() {
-    // console.log('running last note ', !!this.nextBar, this.chord, this.nextChord)
-    if (this.chord != this.nextChord) {
-      const newNotes = Chord.get(this.nextChord).notes
-      const options = [newNotes[0], newNotes[1], newNotes[2]]
-      this.nextBarFirstNote = musicUtils.appendOctaveInteger(utils.chooseWithProbabilities(options, [70, 15, 15]))
-      // console.log('next bar first is ', this.nextBarFirstNote)
-      const noteBelow = Note.transpose(this.nextBarFirstNote, '-2m')
-      const noteAbove = Note.transpose(this.nextBarFirstNote, '2m')
-      const noteDominantBelow = Note.transpose(this.nextBarFirstNote, '-4M')
-      // console.log('choose from ', noteBelow, noteAbove, noteDominantBelow)
-      let chosen;
-      [noteBelow, noteAbove, noteDominantBelow].some( (attempt) => {
-        // do not include octave in comparison
-        if (this.notes.includes(attempt.substring(0, attempt.length - 1))) {
-          chosen = attempt
-          return true
-        }
-      })
-      if (!chosen) {
-        chosen = utils.chooseWithProbabilities(
-          [noteBelow, noteAbove, noteDominantBelow,
-            musicUtils.appendOctaveInteger(this.notes[3]), musicUtils.appendOctaveInteger(this.notes[2]), musicUtils.appendOctaveInteger(this.notes[1])],
-          [20, 20, 15, 15, 15, 15])
-      }
-
-      return musicUtils.appendOctaveInteger(chosen)
-    } else {
-      const options = [this.notes[0], this.notes[1], this.notes[2]]
-      this.nextBarFirstNote = musicUtils.appendOctaveInteger(utils.chooseWithProbabilities(options, [70, 15, 15]))
-      const noteBelow = Note.transpose(this.notes[0], '-2m')
-      const noteAbove = Note.transpose(this.notes[0], '2m')
-      const noteDominantBelow = Note.transpose(this.notes[0], '-4M')
-      const noteDominantAbove = Note.transpose(this.notes[0], '5M')
-      const choice = utils.chooseWithProbabilities(
-        [noteBelow, noteAbove, noteDominantBelow, noteDominantAbove, this.notes[3], this.notes[2], this.notes[1]],
-        [20, 20, 20, 10, 10, 10, 10])
-      return musicUtils.appendOctaveInteger(choice)
-    }
+    return this.noteChooser.lastNote()
   }
 
-  // given 2 notes and a chord, pick 2 notes in between
   notesBetween() {
-    const chosenScale = musicUtils.chooseScale(this.chord)
-    const rangeFinder = Scale.rangeOf(`${this.key} ${chosenScale}`)
-    if (Interval.semitones(Interval.distance(this.chosenFirstNote, this.chosenLastNote)) < 5) {
-      this.chosenLastNote = Note.transpose(this.chosenLastNote, '8M')
-    }
-    const noteRange = rangeFinder(this.chosenFirstNote, this.chosenLastNote)
-    return utils.chooseTwoRandomElementsInOrder(noteRange)
+    return this.noteChooser.notesBetween()
   }
 
-  chooseNotes() {
+  prepNextBar() {
     this.nextBar = this.line.nextBar(this.barIdx)
     if (this.nextBar) {
       this.nextChord = this.nextBar.chord
     } else {
       this.nextChord = this.chord
     }
+  }
+
+  chooseNotes() {
+    this.prepNextBar()
+    this.noteChooser = new NoteChooser(
+      this.chord,
+      this.nextChord,
+      this.lastBar && this.lastBar.nextBarFirstNote,
+      this.notes,
+      this.key,
+      this.nextBarFirstNoteCallback
+    )
     // console.log('working with ', this.chord, this.notes)
     this.chosenFirstNote = this.firstNote()
     this.chosenLastNote = this.lastNote()
