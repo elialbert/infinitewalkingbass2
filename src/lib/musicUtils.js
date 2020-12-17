@@ -2,11 +2,12 @@ import utils from './utils.js'
 import { Chord, Interval } from '@tonaljs/tonal'
 import * as Tonal from '@tonaljs/tonal'
 window.t = Tonal
-const acceptableScales = ["ionian pentatonic", "lydian pentatonic", "lydian",
-  "harmonic major", "major", "bebop", "bebop major", "chromatic"]
+const acceptableScales = ["ionian pentatonic", "lydian pentatonic", "major", "minor", 'minor pentatonic',
+  'major blues', 'minor blues', 'harmonic minor', 'melodic minor', 'bebop', 'bebop minor', 'bebop major',
+  'minor bebop']
 // const acceptableScales = ['bebop']
 
-  function chooseScale(chord) {
+function chooseScale(chord) {
   return utils.randFromArray(Chord.chordScales(chord) && acceptableScales)
 }
 

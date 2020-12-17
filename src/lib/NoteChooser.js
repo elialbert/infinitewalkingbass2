@@ -125,7 +125,7 @@ class NoteChooser {
     if (musicUtils.semiDistance(this.chosenFirstNote, chosenLastNoteToUse) < 2) {
       chosenLastNoteToUse = Note.transpose(this.chosenLastNote, '-4M')
     }
-    if (musicUtils.semiDistance(this.chosenFirstNote, chosenLastNoteToUse) < 3) {
+    if (musicUtils.semiDistance(this.chosenFirstNote, chosenLastNoteToUse) <= 3) {
       rangeFinder = Scale.rangeOf(`${this.key} chromatic`)
     }
     let noteRange = rangeFinder(this.chosenFirstNote, chosenLastNoteToUse)
@@ -137,8 +137,11 @@ class NoteChooser {
       if (ind > -1) { noteRange.splice(ind, 1) }
     }
 
+    if (this.direction == 'down') {
+      noteRange = noteRange.reverse()
+    }
     let r = utils.chooseTwoRandomElementsInOrder(noteRange)
-    // console.log('picking notes from ', this.chosenFirstNote, chosenLastNoteToUse, chrom ,this.chosenScale, noteRange, r)
+    console.log('picking notes from ', this.chosenFirstNote, chosenLastNoteToUse ,this.chosenScale, noteRange, r)
     return r
   }
 }

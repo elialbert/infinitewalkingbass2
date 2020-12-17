@@ -54,7 +54,10 @@ function chooseWithProbabilityDecreasing(values) {
 
 function chooseTwoRandomElementsInOrder(arr) {
   let c1 = randFromArray(arr)
+  const ind = arr.indexOf(c1)
+  arr.splice(ind, 1)
   let c2 = randFromArray(arr)
+  if (!c2) { c2 = c1 }
   if (arr.indexOf(c1) <= arr.indexOf(c2)) {
     return [c1, c2]
   } else {

@@ -19,8 +19,8 @@
     envelope: {
       attack: 0.005,
       decay: 0.991,
-      sustain: 0.01,
-      release: .004
+      sustain: 0.001,
+      release: .001
     }
   })//.toDestination()
 
@@ -40,6 +40,7 @@
   })
   bass.chain(eq, reverb, tremelo, Tone.Destination)
   // bass.chain(bassFilter, tremelo, reverb)//.toDestination();
+  // bass.toDestination()
 
   const sw = new SongWriter()
   sw.generate()
