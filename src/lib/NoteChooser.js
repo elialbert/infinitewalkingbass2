@@ -144,7 +144,7 @@ class NoteChooser {
 
     if (noteRange.length == 0) { noteRange = rangeFinder(this.chosenFirstNote, this.nextBarFirstNote) }
     let r = utils.chooseTwoRandomElementsInOrder(noteRange)
-    console.log('picking notes from ', this.chosenFirstNote, chosenLastNoteToUse ,this.chosenScale, noteRange, r)
+    // console.log('picking notes from ', this.chosenFirstNote, chosenLastNoteToUse ,this.chosenScale, noteRange, r)
     return r
   }
 }

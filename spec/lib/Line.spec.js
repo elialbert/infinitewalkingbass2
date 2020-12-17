@@ -4,7 +4,7 @@ import Line from 'src/lib/Line.js';
 
 it('determines current chord', () => {
   let sw = new SongWriter()
-  sw.progA = ['IIm7', 'V7', 'IMaj7']
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
   s.chordsToBars = [2, 2, 4]
@@ -16,17 +16,17 @@ it('determines current chord', () => {
 
 it('determines another chord', () => {
   let sw = new SongWriter()
-  sw.progA = ['IIm7', 'V7', 'IMaj7']
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
   s.chordsToBars = [2, 2, 4]
   const l = new Line(s, 0)
-  expect(l.currentChord(2)).toEqual('G7')
+  expect(l.currentChord(2)).toEqual('A7')
 })
 
 it('determines another chord', () => {
   let sw = new SongWriter()
-  sw.progA = ['IIm7', 'V7', 'IMaj7']
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
   s.chordsToBars = [2, 2, 4]
@@ -36,7 +36,7 @@ it('determines another chord', () => {
 
 it('generates beats in bars', () => {
   let sw = new SongWriter()
-  sw.progA = ['IIm7', 'V7', 'IMaj7']
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
   s.chordsToBars = [2, 2, 4]

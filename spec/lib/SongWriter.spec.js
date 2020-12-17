@@ -1,20 +1,6 @@
 import SongWriter from 'src/lib/SongWriter.js';
 import { Progression } from '@tonaljs/tonal'
 
-it('it works', () => {
-  const i = new SongWriter(null)
-  expect(i.random()).not.toBe(null)
-})
-
-it('forces nonrandom', () => {
-  function nonrandom() {
-    return 1
-  }
-
-  const i = new SongWriter(nonrandom)
-  expect(i.random()).toBe(1)
-})
-
 it('gathers notes as result', () => {
   const sw = new SongWriter(null)
   sw.keys = ['C']

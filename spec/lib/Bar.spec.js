@@ -2,7 +2,7 @@ import SongWriter from 'src/lib/SongWriter.js';
 
 it('determines current chord', () => {
   let sw = new SongWriter()
-  sw.progA = ['IIm7', 'V7', 'IMaj7']
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   sw.generate()
 
@@ -20,7 +20,7 @@ it('determines current chord', () => {
 
 it('determines notes', () => {
   let sw = new SongWriter()
-  sw.progA = ['IIm7', 'V7', 'IMaj7']
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   sw.generate()
 
@@ -38,7 +38,7 @@ it('determines notes', () => {
 
 it('determines notes while changing chord', () => {
   let sw = new SongWriter()
-  sw.progA = ['IIm7', 'V7', 'IMaj7']
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   sw.generate()
 

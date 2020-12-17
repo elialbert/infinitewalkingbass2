@@ -4,6 +4,8 @@
   import Score from './Score.svelte'
 window.Tone = Tone
 
+  let loopCount = -1
+
   // var bass = new Tone.PolySynth(Tone.Synth, {
 	// 		oscillator: {
 	// 			partials: [0, 2, 3, 4],
@@ -107,7 +109,6 @@ window.Tone = Tone
           time);
 
         if (currentBeatNumber == (totalBeatCount - 1)) {
-          // console.log('want it to be ', Tone.Transport.nextSubdivision('16n'))
           loop.clear()
           return restart(true)
         }
@@ -121,7 +122,8 @@ window.Tone = Tone
 
   function restart(time) {
     currentBeatNumber = -1
-    sw = new SongWriter()
+    loopCount += 1
+    sw = new SongWriter(loopCount)
     sw.generate()
     sw.notes = sw.gather()
     notesToPlay = sw.flatten(sw.notes)

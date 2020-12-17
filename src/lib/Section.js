@@ -32,8 +32,17 @@ class Section {
   }
 
   generateChordsToBars() {
-    // todo make this dynamic
-    return this.part == 'a' ? [2, 2, 4] : [3, 3, 3, 3]
+    if (this.lineCount == 2) {
+      if (this.progression.length == 3) { return [4, 2, 2] }
+      if (this.progression.length == 4) { return [2, 2, 2, 2] }
+      if (this.progression.length == 6) { return [2, 2, 1, 1, 1, 1] }
+    }
+
+    if (this.lineCount == 3) {
+      if (this.progression.length == 3) { return [4, 4, 4] }
+      if (this.progression.length == 4) { return [3, 3, 3, 3] }
+      if (this.progression.length == 6) { return [2, 2, 2, 2, 2, 2] }
+    }
   }
 
   generate() {

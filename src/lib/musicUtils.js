@@ -33,12 +33,45 @@ function semiDistance(n1, n2) {
   return Interval.semitones(Interval.distance(n1, n2))
 }
 
+
+const progressions = [
+  ['IIm7', 'V7', 'IMaj7'],
+  ['IMaj7', 'IV7', 'IIIm7', 'VIMaj7'],
+  ['IMaj7', 'VIm7', 'IIm7', 'V7'],
+  ['IIm7', 'VI7', 'IIm7', 'V7'],
+  ['IMaj7', 'IMaj7', 'IIm7', 'V7'],
+  ['IMaj7', 'I#d7', 'IIm7', 'II#d7', 'IIIm7', 'VI7'],
+  ['Imaj7', 'IIm7', 'V7', 'IVmaj7']
+]
+
+function prepProgression(prog) {
+  let res = []
+  prog.forEach((c) => {
+    if (c.includes('#d7')) {
+      res.push(c.replace('#d7', '#dim7'))
+    } else {
+      res.push(c)
+    }
+  })
+  return res
+}
+
+function chooseProgression(key) {
+  return prepProgression(
+    Tonal.Progression.fromRomanNumerals(key,
+      utils.randFromArray(progressions)
+    )
+  )
+}
+
 const musicUtils = {
   chooseScale: chooseScale,
   appendOctaveInteger: appendOctaveInteger,
   noteInList: noteInList,
   noteOctave: noteOctave,
-  semiDistance: semiDistance
+  semiDistance: semiDistance,
+  chooseProgression: chooseProgression,
+  prepProgression: prepProgression
 }
 
 export default musicUtils

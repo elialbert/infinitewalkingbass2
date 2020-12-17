@@ -1,23 +1,13 @@
 import Section from './Section.js'
-import { Progression } from '@tonaljs/tonal'
-
-function basicRandom() {
-  return Math.random()
-}
+import musicUtils from './musicUtils.js'
 
 class SongWriter {
-  constructor(random) {
-    this.random = random
-    if (!this.random) {
-      this.random = basicRandom
-    }
-
-    this.keys = ['C']
-    this.key = 'C'
-    this.progA = ['IIm7', 'V7', 'IMaj7']
-    this.progB = ['IMaj7', 'IV7', 'IIIm7', 'VIMaj7']
-    this.chordProgA = Progression.fromRomanNumerals(this.key, this.progA)
-    this.chordProgB = Progression.fromRomanNumerals(this.key, this.progB)
+  constructor(songIdx) {
+    this.keys = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'Eb', 'Bb', 'F']
+    this.key = this.keys[songIdx % this.keys.length]
+    this.chordProgA = musicUtils.chooseProgression(this.key)
+    this.chordProgB = musicUtils.chooseProgression(this.key)
+    // console.log(this.progA, this.progB, this.chordProgA, this.chordProgB)
     this.beatCounter = 0
   }
 
