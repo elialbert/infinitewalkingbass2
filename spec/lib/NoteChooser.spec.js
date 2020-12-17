@@ -27,12 +27,28 @@ it('chooses obvious first note', () => {
 
 it('chooses last note', () => {
   setRandom(0)
-  let nc = prep('C7', 'C7', null, 'C')
+  let nc = prep('C7', 'C7', null, 'C', 'down')
   expect(nc.firstNote()).toEqual('C2')
-  expect(nc.lastNote()).toEqual('B1')
+  expect(nc.lastNote()).toEqual('B0')
 
   setRandom(0.65)
   nc = prep('C7', 'C7', null, 'C')
   expect(nc.firstNote()).toEqual('C2')
-  expect(nc.lastNote()).toEqual('D#2')
+  expect(nc.lastNote()).toEqual('G#1')
+})
+
+it('next bar first note', () => {
+  setRandom(0.99)
+  let nc = prep('C7', 'C7', null, 'C', 'up')
+  expect(nc.firstNote()).toEqual('C2')
+  expect(nc.runNextBarFirstNote()).toEqual('Eb2')
+
+  nc = prep('C7', 'C7', null, 'C', 'down')
+  expect(nc.firstNote()).toEqual('C2')
+  expect(nc.runNextBarFirstNote()).toEqual('A1')
+
+  setRandom(0.5)
+  nc = prep('Dm7', 'Dm7', null, 'C', 'down')
+  expect(nc.firstNote()).toEqual('D2')
+  expect(nc.runNextBarFirstNote()).toEqual('D1')
 })

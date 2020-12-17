@@ -17,6 +17,7 @@ class Section {
 
   nextLine(lineIdx) {
     if (this.lines[lineIdx + 1]) { return this.lines[lineIdx + 1]}
+
     if (this.song.nextSection(this.sectionIdx)) {
       return this.song.nextSection(this.sectionIdx).lines[0]
     }
@@ -24,7 +25,7 @@ class Section {
   }
 
   getDirectionHint(cur) {
-    if (utils.chooseWithProbabilities(['change', 'stay'], [85, 15]) == 'change') {
+    if (utils.chooseWithProbabilities(['change', 'stay'], [35, 65]) == 'change') {
       return cur == 'down' ? 'up' : 'down'
     }
     return cur || 'down'

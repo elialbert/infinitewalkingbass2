@@ -1,7 +1,6 @@
 <script>
   export let songWriter
   export let currentBeatNumber;
-  console.log(songWriter.notes)
 </script>
 
 <div class='score'>
@@ -15,7 +14,7 @@
           </span>
         {/each}
         {#each line.bars as bar}
-          <span class='bar flex-child'>
+          <span class='bar flex-child' class:green={bar.direction == 'up'} class:yellow={bar.direction == 'down'}>
             {#each bar.beats as beat}
               <span class='beat'>
                 <span class:red={currentBeatNumber == beat.beatNumber}>{beat.note}</span> |
@@ -59,5 +58,13 @@
 
   .red {
     color: red;
+  }
+
+  .green {
+    color: #027041;
+  }
+
+  .yellow {
+    color: #cca843;
   }
 </style>

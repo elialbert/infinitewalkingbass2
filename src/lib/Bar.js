@@ -1,6 +1,7 @@
 import Beat from './Beat.js'
 import { Chord } from '@tonaljs/tonal'
 import NoteChooser from './NoteChooser.js'
+import musicUtils from './musicUtils.js'
 
 class Bar {
   constructor(line, chord, barIdx) {

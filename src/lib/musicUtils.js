@@ -1,9 +1,11 @@
 import utils from './utils.js'
-import { Chord, Note } from '@tonaljs/tonal'
-window.t = Note;
-const acceptableScales = ["ionian pentatonic", "lydian pentatonic", "augmented", "lydian", "augmented heptatonic",
-  "harmonic major", "major", "bebop", "bebop major"]
-function chooseScale(chord) {
+import { Chord, Interval } from '@tonaljs/tonal'
+import * as Tonal from '@tonaljs/tonal'
+window.t = Tonal
+const acceptableScales = ["ionian pentatonic", "lydian pentatonic", "lydian",
+  "harmonic major", "major", "bebop", "bebop major", "chromatic"]
+
+  function chooseScale(chord) {
   return utils.randFromArray(Chord.chordScales(chord) && acceptableScales)
 }
 
@@ -25,11 +27,16 @@ function noteInList(noteList, note) {
   return noteList.includes(note.substring(0, note.length - 1))
 }
 
+function semiDistance(n1, n2) {
+  return Interval.semitones(Interval.distance(n1, n2))
+}
+
 const musicUtils = {
   chooseScale: chooseScale,
   appendOctaveInteger: appendOctaveInteger,
   noteInList: noteInList,
-  noteOctave: noteOctave
+  noteOctave: noteOctave,
+  semiDistance: semiDistance
 }
 
 export default musicUtils

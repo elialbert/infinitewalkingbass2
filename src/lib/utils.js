@@ -38,6 +38,20 @@ function chooseWithProbabilities(values, probabilities, randFunc) {
   return result || values[values.length - 1]
 }
 
+// assumming an ordered list of values, take each one sequentially at a .5 chance
+function chooseWithProbabilityDecreasing(values) {
+  const len = values.length
+  let chosen = null
+  values.forEach(function(value, chosenIdx) {
+    if (!chosen) {
+      if (Math.random() > 0.5) {
+        chosen = value
+      }
+    }
+  })
+  return chosen || values[values.length - 1]
+}
+
 function chooseTwoRandomElementsInOrder(arr) {
   let c1 = randFromArray(arr)
   let c2 = randFromArray(arr)
@@ -50,6 +64,7 @@ function chooseTwoRandomElementsInOrder(arr) {
 
 const utils = {
   chooseWithProbabilities: chooseWithProbabilities,
+  chooseWithProbabilityDecreasing: chooseWithProbabilityDecreasing,
   randFromArray: randFromArray,
   chooseTwoRandomElementsInOrder: chooseTwoRandomElementsInOrder
 }
