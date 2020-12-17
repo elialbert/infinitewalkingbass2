@@ -10,6 +10,12 @@ class Section {
     this.lineCount = part == 'a' ? 2 : 3
     this.lines = []
     this.barsPerLine = 4
+
+    // quick repeat mode
+    // this.barsPerLine = 1
+    // this.lineCount = 2
+
+
     this.progression = part == 'a' ? this.song.chordProgA : this.song.chordProgB
     this.chordCount = this.progression.length
     this.chordsToBars = this.generateChordsToBars()

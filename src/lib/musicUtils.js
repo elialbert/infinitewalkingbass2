@@ -12,7 +12,7 @@ function chooseScale(chord) {
 }
 
 function appendOctaveInteger(v, octave) {
-  if (!octave) { octave = '2'}
+  if (!octave) { octave = '3'}
   if (!/\d$/.test(v)) {
     v = `${v}${octave}`
   }
@@ -20,7 +20,7 @@ function appendOctaveInteger(v, octave) {
 }
 
 function noteOctave(note) {
-  if (!note) { return 2 }
+  if (!note) { return 3 }
   return note.substring(note.length -1, note.length)
 }
 

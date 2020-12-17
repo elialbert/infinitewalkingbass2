@@ -2,7 +2,10 @@
   import * as Tone from 'tone'
   import SongWriter from './../lib/SongWriter.js'
   import Score from './Score.svelte'
-window.Tone = Tone
+
+  window.Tone = Tone
+
+  Tone.Transport.swing = 0.05
 
   let loopCount = -1
 
@@ -21,7 +24,7 @@ window.Tone = Tone
     envelope: {
       attack: 0.005,
       decay: 0.991,
-      sustain: 0.001,
+      sustain: 0.101,
       release: .001
     }
   })//.toDestination()
@@ -63,7 +66,7 @@ window.Tone = Tone
   let playing = false;
   let buttonText = 'Play'
 
-  Tone.Transport.bpm.value = 80;
+  Tone.Transport.bpm.value = 60;
 
 
   let currentBeatNumber = -1;
@@ -74,14 +77,16 @@ window.Tone = Tone
 
   function togglePlay() {
     if (playing) {
-      console.log('stopping'); playing = false;
+      // console.log('stopping');
+      playing = false;
       buttonText = "Play";
       bass.triggerRelease();
       // Tone.Transport.cancel(0)
       // Tone.Transport.pause();
       loop.stop()
     } else {
-      console.log('starting'); playing = true;
+      // console.log('starting');
+      playing = true;
       buttonText = 'Pause'
 
       if (Tone.context.state !== 'running') {
@@ -100,7 +105,7 @@ window.Tone = Tone
         currentBeatNumber += 1
         // console.log('playing', note, currentBeatNumber, time, Tone.Transport.seconds)
 
-        bell.triggerAttack(note, time, 0);
+        // bell.triggerAttack(note, time, 0);
         bass.triggerAttackRelease(note,
                                   '8n',
                                   time);
@@ -109,14 +114,15 @@ window.Tone = Tone
           time);
 
         if (currentBeatNumber == (totalBeatCount - 1)) {
-          loop.clear()
-          return restart(true)
+          loop.clear(); loop.stop()
+          return restart(time)
         }
       },
       events: notesToPlay,
       subdivision: "8n",
       loop: false,
-      loopEnd: 1
+      loopEnd: 1,
+      humanize: true
     });
   }
 
@@ -133,7 +139,7 @@ window.Tone = Tone
     loop = makeLoop(notesToPlay)
     if (time) {
       // console.log('ready', time, loop, Tone.Transport.seconds, Tone.Transport.nextSubdivision('32n'))
-      loop.start(Tone.Transport.nextSubdivision('8n'))
+      loop.start(time)
     }
   }
   restart()

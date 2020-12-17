@@ -26,10 +26,10 @@ class NoteChooser {
     const newNotes = Chord.get(this.nextChord).notes
     let nextBarFirstNote
 
-    if ((musicUtils.noteOctave(this.chosenFirstNote) == 0)) {
+    if ((musicUtils.noteOctave(this.chosenFirstNote) <= 0)) {
       this.direction = 'up'
     }
-    if (musicUtils.noteOctave(this.chosenFirstNote) == 4) {
+    if (musicUtils.noteOctave(this.chosenFirstNote) >= 4) {
       this.direction = 'down'
     }
 
