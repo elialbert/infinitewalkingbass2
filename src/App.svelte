@@ -3,16 +3,15 @@
 </script>
 
 <main>
-  <h1>Infinite Walking Bass Generator Version 2</h1>
+  <h1>Infinite Walking Bass Generator 2</h1>
   <Player></Player>
 </main>
 
 <style>
 	main {
 		text-align: center;
-		padding: 1em;
-		max-width: 240px;
 		margin: 0 auto;
+    padding: 10px;
 	}
 
 	h1 {
@@ -25,6 +24,12 @@
 	@media (min-width: 640px) {
 		main {
 			max-width: none;
+		}
+	}
+
+  @media (max-width: 640px) {
+		h1 {
+			font-size: 1.5em
 		}
 	}
 </style>

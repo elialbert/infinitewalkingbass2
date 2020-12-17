@@ -16,9 +16,9 @@
         {/each}
         {#each line.bars as bar}
           <span class='bar flex-child' class:green={bar.direction == 'up'} class:yellow={bar.direction == 'down'}>
-            {#each bar.beats as beat}
+            {#each bar.beats as beat, i}
               <span class='beat'>
-                <span class:red={beat.beatNumbers.includes(currentBeatNumber)}>{beat.note}</span> |
+                <span class:red={beat.beatNumbers.includes(currentBeatNumber)}>{beat.note}</span> {#if i != bar.beats.length - 1} | {/if}
               </span>
             {/each}
           </span>
@@ -30,7 +30,7 @@
 
 <style>
   .score {
-    padding: 20px;
+    padding-top: 20px;
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
@@ -43,13 +43,18 @@
   }
 
   .line {
-    padding: 30px;
+    padding-top: 30px;
+    padding-bottom: 30px;
     display: flex;
     flex-wrap: wrap
   }
 
   .beat {
     padding-right: 4px;
+  }
+
+  .bar {
+    padding-top: 4px;
   }
 
   .flex-child {
