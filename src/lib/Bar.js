@@ -1,7 +1,5 @@
 import Beat from './Beat.js'
-import { Chord, Note, Scale, Interval } from '@tonaljs/tonal'
-import utils from './utils.js'
-import musicUtils from './musicUtils.js'
+import { Chord } from '@tonaljs/tonal'
 import NoteChooser from './NoteChooser.js'
 
 class Bar {
@@ -50,6 +48,7 @@ class Bar {
       this.lastBar && this.lastBar.nextBarFirstNote,
       this.notes,
       this.key,
+      this.direction,
       this.nextBarFirstNoteCallback
     )
     // console.log('working with ', this.chord, this.notes)
@@ -71,7 +70,6 @@ class Bar {
       beat.generate(this.notes[beatIdx])
       this.beats.push(beat)
     })
-
   }
 
   gather() {

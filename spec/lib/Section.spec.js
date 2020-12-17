@@ -39,3 +39,12 @@ it('has next line', () => {
   let nl3 = sw.sectionC.nextLine(1)
   expect(nl3).toBe(null)
 })
+
+it('has last line for each line besides the first', () => {
+  let sw = new SongWriter()
+  sw.generate()
+  const s = sw.sectionB
+  expect(s.lines[0].lastLine).toBe(undefined)
+  expect(s.lines[1].lastLine.lineIdx).toEqual(s.lines[0].lineIdx)
+  expect(s.lines[2].lastLine.lineIdx).toEqual(s.lines[1].lineIdx)
+})

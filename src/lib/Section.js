@@ -1,4 +1,5 @@
 import Line from './Line.js'
+import utils from './utils'
 
 class Section {
   constructor(song, part, sectionIdx) {
@@ -22,6 +23,13 @@ class Section {
     return null
   }
 
+  getDirectionHint(cur) {
+    if (utils.chooseWithProbabilities(['change', 'stay'], [85, 15]) == 'change') {
+      return cur == 'down' ? 'up' : 'down'
+    }
+    return cur || 'down'
+  }
+
   generateChordsToBars() {
     // todo make this dynamic
     return this.part == 'a' ? [2, 2, 4] : [3, 3, 3, 3]
@@ -29,9 +37,13 @@ class Section {
 
   generate() {
     // console.log('generating section', this.part, this.barsPerLine, this.progression, this.chordsToBars)
+    let lastLine
     Array(this.lineCount).fill(1).map((_, lineIdx) => {
       let line = new Line(this, lineIdx)
+      line.lastLine = lastLine
       line.generate()
+
+      lastLine = line
       this.lines.push(line)
     })
   }

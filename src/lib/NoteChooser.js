@@ -3,17 +3,22 @@ import utils from './utils.js'
 import musicUtils from './musicUtils.js'
 
 class NoteChooser {
-  constructor(chord, nextChord, lastBarNextBarFirstNote, notes, key, nextBarFirstNoteCallback) {
+  constructor(chord, nextChord, lastBarNextBarFirstNote, notes, key,
+    direction,
+    nextBarFirstNoteCallback) {
     this.chord = chord
     this.nextChord = nextChord
     this.lastBarNextBarFirstNote = lastBarNextBarFirstNote
     this.notes = notes
     this.key = key
+    this.direction = direction
+    this.octave = musicUtils.noteOctave(lastBarNextBarFirstNote)
+    // console.log('oct', this.octave, this.direction)
     this.nextBarFirstNoteCallback = nextBarFirstNoteCallback
   }
 
   firstNote() {
-    this.chosenFirstNote = this.lastBarNextBarFirstNote || musicUtils.appendOctaveInteger(this.notes[0])
+    this.chosenFirstNote = this.lastBarNextBarFirstNote || musicUtils.appendOctaveInteger(this.notes[0], this.octave)
     return this.chosenFirstNote
   }
 
@@ -31,7 +36,7 @@ class NoteChooser {
 
     const options = [newNotes[0], newNotes[1], newNotes[2]]
     const nextBarFirstNote = musicUtils.appendOctaveInteger(
-      utils.chooseWithProbabilities(options, nextBarProb))
+      utils.chooseWithProbabilities(options, nextBarProb), this.octave)
     this.nextBarFirstNoteCallback(nextBarFirstNote)
 
     const noteBelow = Note.transpose(nextBarFirstNote, '-2m')
@@ -45,7 +50,7 @@ class NoteChooser {
     if (this.chord != this.nextChord) {
       [noteBelow, noteAbove, noteStepDown, noteStepUp, noteDominantBelow].some( (attempt) => {
         // do not include octave in comparison
-        if (this.notes.includes(attempt.substring(0, attempt.length - 1))) {
+        if (musicUtils.noteInList(this.notes, attempt)) {
           chosen = attempt
           return true
         }
@@ -56,12 +61,12 @@ class NoteChooser {
       chosen = utils.chooseWithProbabilities(
         [noteBelow, noteAbove, noteDominantBelow, noteDominantAbove,
           noteStepDown, noteStepUp, noteBelow,
-          musicUtils.appendOctaveInteger(this.notes[3]),
-          musicUtils.appendOctaveInteger(this.notes[2]),
-          musicUtils.appendOctaveInteger(this.notes[1])],
+          musicUtils.appendOctaveInteger(this.notes[3], this.octave),
+          musicUtils.appendOctaveInteger(this.notes[2], this.octave),
+          musicUtils.appendOctaveInteger(this.notes[1], this.octave)],
         [10, 10, 10, 10, 10, 10, 10, 10, 10, 10])
     }
-    this.chosenLastNote = musicUtils.appendOctaveInteger(chosen)
+    this.chosenLastNote = musicUtils.appendOctaveInteger(chosen, this.octave)
     return this.chosenLastNote
   }
 

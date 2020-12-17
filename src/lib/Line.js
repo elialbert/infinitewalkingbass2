@@ -45,7 +45,8 @@ class Line {
     if (barIdx !== 0) {
       return this.bars[barIdx - 1]
     }
-    return null
+    if (!this.lastLine) { return null }
+    return this.lastLine.bars[this.lastLine.bars.length - 1]
   }
 
   generate() {
@@ -57,6 +58,7 @@ class Line {
       let bar = new Bar(this, curChord, barIdx)
       bar.generate()
       bar.lastBar = this.lastBar(barIdx)
+      bar.direction = this.section.getDirectionHint(bar.lastBar && bar.lastBar.direction)
       this.bars.push(bar)
     })
   }

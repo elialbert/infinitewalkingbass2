@@ -15,9 +15,21 @@ function appendOctaveInteger(v, octave) {
   return v
 }
 
+function noteOctave(note) {
+  if (!note) { return 2 }
+  return note.substring(note.length -1, note.length)
+}
+
+function noteInList(noteList, note) {
+  note = appendOctaveInteger(note)
+  return noteList.includes(note.substring(0, note.length - 1))
+}
+
 const musicUtils = {
   chooseScale: chooseScale,
-  appendOctaveInteger: appendOctaveInteger
+  appendOctaveInteger: appendOctaveInteger,
+  noteInList: noteInList,
+  noteOctave: noteOctave
 }
 
 export default musicUtils
