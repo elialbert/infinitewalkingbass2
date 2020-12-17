@@ -19,6 +19,7 @@
 
   sw.notes = sw.gather()
   let notesToPlay = sw.flatten(sw.notes)
+  let currentBeatNumber = -1;
 
   const bell = new Tone.MetalSynth({
     volume: -100
@@ -30,6 +31,7 @@
     bass.triggerAttackRelease(note,
                               '8n',
                               time);
+    currentBeatNumber += 1
     }), notesToPlay, "8n");
 
   function togglePlay() {
@@ -58,4 +60,4 @@
     on:click={togglePlay}
           id='play-pause'>{buttonText}</button>
 
-<Score songWriter={sw}></Score>
+<Score songWriter={sw} {currentBeatNumber}></Score>

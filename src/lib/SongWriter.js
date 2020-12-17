@@ -18,6 +18,7 @@ class SongWriter {
     this.progB = ['IMaj7', 'IV7', 'IIIm7', 'VIMaj7']
     this.chordProgA = Progression.fromRomanNumerals(this.key, this.progA)
     this.chordProgB = Progression.fromRomanNumerals(this.key, this.progB)
+    this.beatCounter = 0
   }
 
   nextSection(sectionIdx) {
