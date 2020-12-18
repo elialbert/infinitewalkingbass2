@@ -9,14 +9,8 @@
 
   let loopCount = -1
 
-  // var bass = new Tone.PolySynth(Tone.Synth, {
-	// 		oscillator: {
-	// 			partials: [0, 2, 3, 4],
-	// 		}
-  // 	}).toDestination();
-
-  var bass = new Tone.MonoSynth({
-    volume: 10,
+  var bass = new Tone.Synth({
+    volume: 8,
     frequency: 'C2',
     oscillator: {
       type: 'square4'
@@ -24,24 +18,11 @@
     envelope: {
       attack: 0.005,
       decay: 0.991,
-      sustain: 0.101,
-      release: .001
-    }
-  })//.toDestination()
-
-  var bass2 = new Tone.MonoSynth({
-    volume: -10,
-    frequency: 'C2',
-    oscillator: {
-      type: 'fmsine'
-    },
-    envelope: {
-      attack: 0.005,
-      decay: 0.991,
       sustain: 0.001,
       release: .001
     }
-  }).toDestination()
+  })
+
   var reverb = new Tone.Reverb({decay: 0.3})
   var tremelo = new Tone.Tremolo({
     frequency: 10,
@@ -50,15 +31,7 @@
     spread: 4,
     wet: 0
   })
-  const bassFilter = new Tone.Filter(100, 'lowpass');
-  const eq = new Tone.EQ3({
-    lowLevel: 20,
-    midLevel: 0,
-    highLevel: -20
-  })
-  bass.chain(eq, reverb, tremelo, Tone.Destination)
-  // bass.chain(bassFilter, tremelo, reverb)//.toDestination();
-  // bass.toDestination()
+  bass.chain(reverb, tremelo, Tone.Destination)
 
   let sw, notesToPlay, loop, totalBeatCount
 
@@ -81,8 +54,6 @@
       playing = false;
       buttonText = "Play";
       bass.triggerRelease();
-      // Tone.Transport.cancel(0)
-      // Tone.Transport.pause();
       loop.stop()
     } else {
       // console.log('starting');
@@ -104,12 +75,7 @@
       callback: (time, note) => {
         currentBeatNumber += 1
         // console.log('playing', note, currentBeatNumber, time, Tone.Transport.seconds)
-        bass.triggerAttackRelease(note,
-                                  '8n',
-                                  time);
-        bass2.triggerAttackRelease(note,
-          '8n',
-          time);
+        bass.triggerAttackRelease(note, '8n', time);
 
         if (currentBeatNumber == (totalBeatCount - 1)) {
           loop.clear(); loop.stop()
