@@ -120,7 +120,7 @@
       subdivision: "8n",
       loop: false,
       loopEnd: 1,
-      humanize: true
+      humanize: 0.003
     });
   }
 
