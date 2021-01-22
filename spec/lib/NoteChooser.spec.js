@@ -22,33 +22,33 @@ it('passes through first note', () => {
 
 it('chooses obvious first note', () => {
   let nc = prep('C7', 'C7', null, 'C')
-  expect(nc.firstNote()).toEqual('C2')
+  expect(nc.firstNote()).toEqual('C3')
 })
 
 it('chooses last note', () => {
   setRandom(0)
   let nc = prep('C7', 'C7', null, 'C', 'down')
-  expect(nc.firstNote()).toEqual('C2')
-  expect(nc.lastNote()).toEqual('B0')
+  expect(nc.firstNote()).toEqual('C3')
+  expect(nc.lastNote()).toEqual('B1')
 
   setRandom(0.65)
   nc = prep('C7', 'C7', null, 'C')
-  expect(nc.firstNote()).toEqual('C2')
-  expect(nc.lastNote()).toEqual('A#1')
+  expect(nc.firstNote()).toEqual('C3')
+  expect(nc.lastNote()).toEqual('A#2')
 })
 
 it('next bar first note', () => {
   setRandom(0.99)
   let nc = prep('C7', 'C7', null, 'C', 'up')
-  expect(nc.firstNote()).toEqual('C2')
-  expect(nc.runNextBarFirstNote()).toEqual('D2')
+  expect(nc.firstNote()).toEqual('C3')
+  expect(nc.runNextBarFirstNote()).toEqual('D3')
 
   nc = prep('C7', 'C7', null, 'C', 'down')
-  expect(nc.firstNote()).toEqual('C2')
-  expect(nc.runNextBarFirstNote()).toEqual('B1')
+  expect(nc.firstNote()).toEqual('C3')
+  expect(nc.runNextBarFirstNote()).toEqual('B2')
 
   setRandom(0.5)
   nc = prep('Dm7', 'Dm7', null, 'C', 'down')
-  expect(nc.firstNote()).toEqual('D2')
-  expect(nc.runNextBarFirstNote()).toEqual('D1')
+  expect(nc.firstNote()).toEqual('D3')
+  expect(nc.runNextBarFirstNote()).toEqual('D2')
 })

@@ -38,7 +38,7 @@ class Section {
 
   generateChordsToBars() {
     if (this.lineCount == 2) {
-      if (this.progression.length == 3) { return [4, 2, 2] }
+      if (this.progression.length == 3) { return [2, 2, 4] }
       if (this.progression.length == 4) { return [2, 2, 2, 2] }
       if (this.progression.length == 6) { return [2, 2, 1, 1, 1, 1] }
     }
