@@ -8,7 +8,7 @@ it('determines current chord', () => {
 
   let bar1 = sw.sectionA.lines[0].bars[0]
   bar1.chooseNotes()
-  expect(bar1.firstNote()).toEqual('D2')
+  expect(bar1.firstNote()).toEqual('D3')
   expect(bar1.lastNote()).not.toBe(null)
 
   let bar2 = sw.sectionA.lines[0].bars[1]
@@ -26,7 +26,7 @@ it('determines notes', () => {
 
   let bar1 = sw.sectionA.lines[0].bars[0]
   bar1.chooseNotes()
-  expect(bar1.chosenFirstNote).toEqual('D2')
+  expect(bar1.chosenFirstNote).toEqual('D3')
   expect(bar1.chosenNotesBetween.length).toEqual(2)
 
   let bar2 = sw.sectionA.lines[0].bars[1]
@@ -44,7 +44,7 @@ it('determines notes while changing chord', () => {
 
   let bar1 = sw.sectionA.lines[0].bars[0]
   bar1.chooseNotes()
-  expect(bar1.chosenFirstNote).toEqual('D2')
+  expect(bar1.chosenFirstNote).toEqual('D3')
   expect(bar1.chosenNotesBetween.length).toEqual(2)
 
   let bar2 = sw.sectionA.lines[0].bars[1]

@@ -17,7 +17,7 @@ let setRandom = function(val) {
 
 it('passes through first note', () => {
   let nc = prep('C7', 'C7', 'C2', 'C')
-  expect(nc.firstNote()).toEqual('C3')
+  expect(nc.firstNote()).toEqual('C2')
 })
 
 it('chooses obvious first note', () => {
