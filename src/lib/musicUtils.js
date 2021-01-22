@@ -41,12 +41,13 @@ const progressions = [
   ['IIm7', 'VI7', 'IIm7', 'V7'],
   ['IMaj7', 'IMaj7', 'IIm7', 'V7'],
   ['Imaj7', 'IIm7', 'V7', 'IVmaj7'],
-  ["Imaj7", "bIIo7", "IIm7", "bIIIo7"], 
-  ["IIIm7", "IVMaj7", "bVo7", "V7"],
-  ["IMaj7", "bIII7", "IIm7", "bII7" ],
-  ["IMaj7", "bIII7", "bVI7", "bII7"],
-  ["IMaj7", "IMaj7", "II7", "II7"],
-  ["IMaj7", "Im7", "II7", "bIIMaj7"]
+  ['Imaj7', 'bIIo7', 'IIm7', 'bIIIo7'],
+  ['IIIm7', 'IVMaj7', 'bVo7', 'V7'],
+  ['IMaj7', 'bIII7', 'IIm7', 'bII7'],
+  ['IIIm7', 'bIII7', 'IIm7', 'bII7'],
+  ['IMaj7', 'bIII7', 'bVI7', 'bII7'],
+  ['IMaj7', 'II7', 'IIm7', 'V7'],
+  ['IMaj7', 'Im7', 'II7', 'bIIMaj7']
 ];
 
 function prepProgression(prog) {
