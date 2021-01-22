@@ -4,7 +4,7 @@ import * as Tonal from '@tonaljs/tonal'
 window.t = Tonal
 const acceptableScales = ["major", "minor", 'minor pentatonic',
   'major blues', 'minor blues', 'harmonic minor', 'melodic minor', 'bebop', 'bebop minor', 'bebop major',
-  'minor bebop']
+  'minor bebop', 'diminished']
 // const acceptableScales = ['bebop']
 
 function chooseScale(chord) {
