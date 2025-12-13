@@ -6,7 +6,7 @@ class Beat {
     this.bar = bar
     this.beatIdx = beatIdx
     this.onlyRoot = true
-    this.octaveBounce = utils.chooseWithProbabilities(['8M', '-8M', 'no'], [5, 5, 90])
+    this.octaveBounce = utils.chooseWithProbabilities(['8M', '-8M', '1P', 'no'], [10, 10, 17, 63])
     this.triplet = false
   }
 
