@@ -4,13 +4,14 @@ module.exports = {
     '^.+\\.js$': 'babel-jest',
   },
   moduleFileExtensions: ['js', 'svelte'],
-  "roots": [
-    "<rootDir>"
+  testEnvironment: 'jsdom',
+  roots: [
+    '<rootDir>'
   ],
-  "modulePaths": [
-    "<rootDir>"
+  modulePaths: [
+    '<rootDir>'
   ],
-  "moduleDirectories": [
-    "node_modules"
+  moduleDirectories: [
+    'node_modules'
   ],
 }

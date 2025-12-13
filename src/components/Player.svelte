@@ -9,17 +9,31 @@
 
   let loopCount = -1
 
-  var bass = new Tone.Synth({
-    volume: 8,
+  var bass = new Tone.MonoSynth({
+    volume: 15,
     frequency: 'C2',
     oscillator: {
-      type: 'square4'
+      type: 'sawtooth'
+    },
+    filter: {
+      Q: 1,
+      type: 'lowpass',
+      rolloff: -24,
+      frequency: 400
     },
     envelope: {
-      attack: 0.005,
-      decay: 0.991,
-      sustain: 0.001,
-      release: .001
+      attack: 0.01,
+      decay: 0.3,
+      sustain: 0.4,
+      release: 0.8
+    },
+    filterEnvelope: {
+      attack: 0.01,
+      decay: 0.2,
+      sustain: 0.3,
+      release: 0.5,
+      baseFrequency: 150,
+      octaves: 1.5
     }
   })
 
