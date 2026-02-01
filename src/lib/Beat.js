@@ -23,8 +23,8 @@ class Beat {
     this.beatNumbers = [this.bar.line.section.song.beatCounter];
     this.bar.line.section.song.beatCounter += 1;
     if (this.octaveBounce !== 'no') {
-      this.bar.line.section.song.beatCounter += 1;
       this.beatNumbers.push(this.bar.line.section.song.beatCounter)
+      this.bar.line.section.song.beatCounter += 1;
       return [this.note, null, null, Note.transpose(this.note, this.octaveBounce)]
     } else if (this.triplet) {
       this.bar.line.section.song.beatCounter += 1;
