@@ -35,7 +35,7 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "@tonaljs/tonal": "^4.10.0",
+    "tonal": "^6.4.2",
     "sirv-cli": "^2.0.2",
     "tone": "^15.1.22"
   }

@@ -1,5 +1,5 @@
 import utils from './utils.js'
-import { Note } from '@tonaljs/tonal'
+import { Note } from 'tonal'
 
 class Beat {
   constructor(bar, beatIdx) {

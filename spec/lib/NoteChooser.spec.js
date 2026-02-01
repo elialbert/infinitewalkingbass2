@@ -1,5 +1,5 @@
 import NoteChooser from 'src/lib/NoteChooser.js'
-import { Chord } from '@tonaljs/tonal'
+import { Chord } from 'tonal'
 
 let prep = function(chord, nextChord, firstNote, key, direction) {
   const notes = Chord.get(chord).notes

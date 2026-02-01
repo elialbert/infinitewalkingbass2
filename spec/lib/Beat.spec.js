@@ -5,6 +5,9 @@ import Bar from 'src/lib/Bar.js';
 import Beat from 'src/lib/Beat.js';
 
 it('has a note', () => {
+  const mockMath = Object.create(global.Math);
+  mockMath.random = () => 0.99;
+  global.Math = mockMath;
   let sw = new SongWriter()
   const s = new Section(sw, 'a', 0)
   const l = new Line(s, 0)

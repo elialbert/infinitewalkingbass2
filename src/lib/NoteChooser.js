@@ -1,4 +1,4 @@
-import { Chord, Note, Scale, Interval } from '@tonaljs/tonal'
+import { Chord, Note, Scale } from 'tonal'
 import utils from './utils.js'
 import musicUtils from './musicUtils.js'
 

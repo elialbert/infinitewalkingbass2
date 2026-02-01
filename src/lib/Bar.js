@@ -1,5 +1,5 @@
 import Beat from './Beat.js'
-import { Chord } from '@tonaljs/tonal'
+import { Chord } from 'tonal'
 import NoteChooser from './NoteChooser.js'
 import TripletChooser from './TripletChooser.js'
 

@@ -1,6 +1,6 @@
 import utils from './utils.js'
 import musicUtils from './musicUtils.js'
-import { Note } from '@tonaljs/tonal'
+import { Note } from 'tonal'
 
 class TripletChooser {
   constructor(bar) {

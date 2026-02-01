@@ -1,6 +1,6 @@
 import utils from './utils.js'
-import { Chord, Interval } from '@tonaljs/tonal'
-import * as Tonal from '@tonaljs/tonal'
+import { Chord, Interval, Progression } from 'tonal'
+import * as Tonal from 'tonal'
 window.t = Tonal
 const acceptableScales = ["major", "minor", 'minor pentatonic',
   'major blues', 'minor blues', 'harmonic minor', 'melodic minor', 'bebop', 'bebop minor', 'bebop major',
@@ -64,7 +64,7 @@ function prepProgression(prog) {
 
 function chooseProgression(key) {
   return prepProgression(
-    Tonal.Progression.fromRomanNumerals(key,
+    Progression.fromRomanNumerals(key,
       utils.randFromArray(progressions)
     )
   )

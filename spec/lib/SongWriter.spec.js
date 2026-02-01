@@ -1,5 +1,5 @@
 import SongWriter from 'src/lib/SongWriter.js';
-import { Progression } from '@tonaljs/tonal'
+import { Progression } from 'tonal'
 
 it('gathers notes as result', () => {
   const sw = new SongWriter(null)
