@@ -121,6 +121,18 @@ class TripletChooser {
           }
         }
       }
+
+      // Annotate triplet notes with velocity and duration
+      const target = {velocity: 0.9, duration: '8n'}
+      const ghost = {velocity: 0.55, duration: '32n'}
+      const annotations = {
+        'end': [ghost, ghost, target],
+        'start': [target, ghost, ghost],
+        'middle': [ghost, target, ghost]
+      }
+      beat1.triplet = beat1.triplet.map((note, i) => ({
+        note, ...annotations[pattern][i]
+      }))
     }
 
   }

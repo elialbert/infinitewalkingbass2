@@ -31,7 +31,9 @@ it('adds a chromatic triplet for close intervals going up', () => {
   const triplet = bar.beats[3].triplet
   expect(triplet).toBeInstanceOf(Array)
   expect(triplet.length).toEqual(3)
-  expect(triplet[2]).toEqual('F3') // ends on the target note
+  expect(triplet[2].note).toEqual('F3') // ends on the target note
+  expect(triplet[2].velocity).toEqual(0.9) // target is accented
+  expect(triplet[0].velocity).toEqual(0.55) // approach is ghosted
 })
 
 it('adds a chromatic triplet going down', () => {
@@ -43,7 +45,7 @@ it('adds a chromatic triplet going down', () => {
   const triplet = bar.beats[3].triplet
   expect(triplet).toBeInstanceOf(Array)
   expect(triplet.length).toEqual(3)
-  expect(triplet[2]).toEqual('C3')
+  expect(triplet[2].note).toEqual('C3')
 })
 
 it('adds a stepwise triplet for large intervals', () => {
@@ -54,7 +56,7 @@ it('adds a stepwise triplet for large intervals', () => {
   const triplet = bar.beats[3].triplet
   expect(triplet).toBeInstanceOf(Array)
   expect(triplet.length).toEqual(3)
-  expect(triplet[2]).toEqual('A3') // ends on target
+  expect(triplet[2].note).toEqual('A3') // ends on target
 })
 
 it('skips beats with octaveBounce', () => {

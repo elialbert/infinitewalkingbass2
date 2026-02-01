@@ -93,10 +93,13 @@
 
   function makeLoop(notesToPlay) {
     return new Tone.Sequence({
-      callback: (time, note) => {
+      callback: (time, event) => {
         currentBeatNumber += 1
-        // console.log('playing', note, currentBeatNumber, time, Tone.Transport.seconds)
-        bass.triggerAttackRelease(note, '8n', time);
+        if (typeof event === 'object' && event !== null) {
+          bass.triggerAttackRelease(event.note, event.duration, time, event.velocity)
+        } else {
+          bass.triggerAttackRelease(event, '8n', time)
+        }
 
         if (currentBeatNumber == (totalBeatCount - 1)) {
           loop.clear(); loop.stop()
