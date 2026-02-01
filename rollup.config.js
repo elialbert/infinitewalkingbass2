@@ -35,6 +35,12 @@ function serve() {
 
 export default {
 	input: 'src/main.ts',
+	onwarn(warning, warn) {
+		if (warning.code === 'CIRCULAR_DEPENDENCY' && warning.ids?.some(id => id.includes('node_modules/tone'))) {
+			return;
+		}
+		warn(warning);
+	},
 	output: {
 		sourcemap: true,
 		format: 'iife',

@@ -51,3 +51,65 @@ it('generates beats in bars', () => {
   expect(l.gather()[0]).not.toBe(undefined)
 
 })
+
+it('returns next bar within the line', () => {
+  let sw = new SongWriter()
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
+  sw.key = 'C'
+  const s = new Section(sw, 'a', 0)
+  s.chordsToBars = [2, 2, 4]
+  s.barsPerLine = 4
+  const l = new Line(s, 0)
+  l.generate()
+  expect(l.nextBar(0)).toBe(l.bars[1])
+  expect(l.nextBar(1)).toBe(l.bars[2])
+  expect(l.nextBar(2)).toBe(l.bars[3])
+})
+
+it('returns null for nextBar at end of song', () => {
+  let sw = new SongWriter()
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
+  sw.key = 'C'
+  sw.generate()
+  const lastSection = sw.sectionC
+  const lastLine = lastSection.lines[lastSection.lines.length - 1]
+  const lastBarIdx = lastLine.bars.length - 1
+  expect(lastLine.nextBar(lastBarIdx)).toBe(null)
+})
+
+it('returns previous bar with lastBar', () => {
+  let sw = new SongWriter()
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
+  sw.key = 'C'
+  const s = new Section(sw, 'a', 0)
+  s.chordsToBars = [2, 2, 4]
+  s.barsPerLine = 4
+  const l = new Line(s, 0)
+  l.generate()
+  expect(l.lastBar(1)).toBe(l.bars[0])
+  expect(l.lastBar(2)).toBe(l.bars[1])
+  expect(l.lastBar(3)).toBe(l.bars[2])
+})
+
+it('returns null for lastBar at first bar with no previous line', () => {
+  let sw = new SongWriter()
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
+  sw.key = 'C'
+  const s = new Section(sw, 'a', 0)
+  s.chordsToBars = [2, 2, 4]
+  s.barsPerLine = 4
+  const l = new Line(s, 0)
+  l.generate()
+  expect(l.lastBar(0)).toBe(null)
+})
+
+it('returns last bar of previous line for first bar', () => {
+  let sw = new SongWriter()
+  sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
+  sw.key = 'C'
+  sw.generate()
+  const s = sw.sectionA
+  const secondLine = s.lines[1]
+  const firstLine = s.lines[0]
+  expect(secondLine.lastBar(0)).toBe(firstLine.bars[firstLine.bars.length - 1])
+})
