@@ -2,43 +2,41 @@
   import * as Tone from 'tone'
   import SongWriter from './../lib/SongWriter.js'
   import Score from './Score.svelte'
-  import Controls from './Controls.svelte'
-
   window.Tone = Tone
 
-  Tone.Transport.swing = 0.05
+  Tone.Transport.swing = 0.04
 
   let loopCount = -1
 
   var bass = new Tone.MonoSynth({
-    volume: 6,
+    volume: 5,
     frequency: 'C2',
     oscillator: {
-      type: 'triangle'
+      type: 'square'
     },
     filter: {
       Q: 0,
       type: 'lowpass',
       rolloff: -24,
-      frequency: 280
+      frequency: 500
     },
     envelope: {
-      attack: 0.04,
-      decay: 0.25,
-      sustain: 0.08,
-      release: 0.2
+      attack: 0.02,
+      decay: 0.2,
+      sustain: 0.1,
+      release: 0.18
     },
     filterEnvelope: {
-      attack: 0.01,
-      decay: 0.15,
-      sustain: 0.1,
-      release: 0.3,
-      baseFrequency: 120,
-      octaves: 0.8
+      attack: 0.008,
+      decay: 0.18,
+      sustain: 0.12,
+      release: 0.35,
+      baseFrequency: 150,
+      octaves: 1.5
     }
   })
 
-  var reverb = new Tone.Reverb({decay: 0.3, wet: 0.15})
+  var reverb = new Tone.Reverb({decay: 0.6, wet: 0.2})
   var compressor = new Tone.Compressor({
     threshold: -24,
     ratio: 4,
@@ -52,7 +50,7 @@
     type: 'sine',
     depth: 1,
     spread: 4,
-    wet: 0
+    wet: 0.15
   })
   bass.chain(reverb, compressor, tremelo, Tone.Destination)
 
@@ -62,7 +60,7 @@
   let playing = false;
   let buttonText = 'Play'
 
-  Tone.Transport.bpm.value = 60;
+  Tone.Transport.bpm.value = 72;
 
 
   let currentBeatNumber = -1;
@@ -133,7 +131,7 @@
   restart()
 </script>
 
-<Controls {bass} {reverb} {tremelo} {Tone} {playing} {buttonText} onTogglePlay={togglePlay} />
+<button type="button" class="play-btn" on:click={togglePlay}>{buttonText}</button>
 {#if sw}
   <Score songWriter={sw} {currentBeatNumber}></Score>
 {/if}
