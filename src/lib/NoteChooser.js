@@ -29,7 +29,7 @@ class NoteChooser {
     if ((musicUtils.noteOctave(this.chosenFirstNote) <= 2)) {
       this.direction = 'up'
     }
-    if (musicUtils.noteOctave(this.chosenFirstNote) >= 5) {
+    if (musicUtils.noteOctave(this.chosenFirstNote) >= 4) {
       this.direction = 'down'
     }
 

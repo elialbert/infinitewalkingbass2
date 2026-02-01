@@ -18,7 +18,11 @@
       Q: 0,
       type: 'lowpass',
       rolloff: -24,
+<<<<<<< Updated upstream
       frequency: 500
+=======
+      frequency: 700
+>>>>>>> Stashed changes
     },
     envelope: {
       attack: 0.02,
