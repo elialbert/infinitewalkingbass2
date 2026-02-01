@@ -48,18 +48,34 @@ class NoteChooser {
       // console.log('nnextfirst', this.octave, this.direction, nextBarFirstNote)
 
     } else {
-      const rangeFinder = Scale.rangeOf(`${this.key} ${this.chosenScale}`)
-      let noteRange
-      if (this.direction == 'up') {
-        let minJump = Note.transpose(this.chosenFirstNote, '2m')
-        let maxJump = Note.transpose(this.chosenFirstNote, '8M')
-        noteRange = rangeFinder(minJump, maxJump)
+      // Same chord continues — prefer chord tones to stay grounded
+      const sameChordChoice = utils.chooseWithProbabilities(
+        ['root', 'fifth', 'third', 'scale'], [60, 20, 10, 10])
+
+      if (sameChordChoice !== 'scale') {
+        let noteIndex = sameChordChoice === 'root' ? 0 : sameChordChoice === 'fifth' ? 2 : 1
+        nextBarFirstNote = musicUtils.appendOctaveInteger(newNotes[noteIndex], this.octave)
+
+        if ((musicUtils.semiDistance(this.chosenFirstNote, nextBarFirstNote) <= 0) && this.direction == 'up') {
+          nextBarFirstNote = Note.transpose(nextBarFirstNote, '8M')
+        }
+        if ((musicUtils.semiDistance(this.chosenFirstNote, nextBarFirstNote) >= 0) && this.direction == 'down') {
+          nextBarFirstNote = Note.transpose(nextBarFirstNote, '-8M')
+        }
       } else {
-        let minJump = Note.transpose(this.chosenFirstNote, '-2m')
-        let maxJump = Note.transpose(this.chosenFirstNote, '-8M')
-        noteRange = rangeFinder(minJump, maxJump)
+        const rangeFinder = Scale.rangeOf(`${this.key} ${this.chosenScale}`)
+        let noteRange
+        if (this.direction == 'up') {
+          let minJump = Note.transpose(this.chosenFirstNote, '2m')
+          let maxJump = Note.transpose(this.chosenFirstNote, '8M')
+          noteRange = rangeFinder(minJump, maxJump)
+        } else {
+          let minJump = Note.transpose(this.chosenFirstNote, '-2m')
+          let maxJump = Note.transpose(this.chosenFirstNote, '-8M')
+          noteRange = rangeFinder(minJump, maxJump)
+        }
+        nextBarFirstNote = utils.chooseWithProbabilityDecreasing(noteRange)
       }
-      nextBarFirstNote = utils.chooseWithProbabilityDecreasing(noteRange)
       // console.log('nextfirst', this.octave, this.direction, nextBarFirstNote, noteRange, this.chosenScale)
     }
 
@@ -143,7 +159,18 @@ class NoteChooser {
     }
 
     if (noteRange.length == 0) { noteRange = rangeFinder(this.chosenFirstNote, this.nextBarFirstNote) }
+
+    // Identify chord tones in range before chooseTwoRandomElementsInOrder mutates it
+    const chordTonesInRange = noteRange.filter(n => musicUtils.noteInList(this.notes, n))
+
     let r = utils.chooseTwoRandomElementsInOrder(noteRange)
+
+    // Beat 3 (r[1]) is a strong beat — prefer chord tones 60% of the time
+    if (chordTonesInRange.length > 0 &&
+        utils.chooseWithProbabilities(['yes', 'no'], [60, 40]) === 'yes') {
+      r[1] = utils.randFromArray(chordTonesInRange)
+    }
+
     // console.log('picking notes from ', this.chosenFirstNote, chosenLastNoteToUse ,this.chosenScale, noteRange, r)
     return r
   }

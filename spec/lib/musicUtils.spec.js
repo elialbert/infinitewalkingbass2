@@ -1,9 +1,21 @@
 import musicUtils from 'src/lib/musicUtils.js'
+import { Chord } from 'tonal'
 
 it('chooses a random scale from a chord', () => {
   let result = musicUtils.chooseScale('Dm7')
   expect(result).not.toBe(undefined)
   expect(result).not.toBe(null)
+})
+
+it('chooses a scale compatible with the chord', () => {
+  const chords = ['Dm7', 'C7', 'GMaj7', 'Am7', 'Bdim']
+  chords.forEach(chord => {
+    const compatibleScales = Chord.chordScales(chord)
+    for (let i = 0; i < 20; i++) {
+      const chosen = musicUtils.chooseScale(chord)
+      expect(compatibleScales).toContain(chosen)
+    }
+  })
 })
 
 it('appends octave integer to note without one', () => {

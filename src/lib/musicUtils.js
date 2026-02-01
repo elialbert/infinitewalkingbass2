@@ -8,7 +8,10 @@ const acceptableScales = ["major", "minor", 'minor pentatonic',
 // const acceptableScales = ['bebop']
 
 function chooseScale(chord) {
-  return utils.randFromArray(Chord.chordScales(chord) && acceptableScales)
+  const chordScales = Chord.chordScales(chord)
+  const validScales = acceptableScales.filter(s => chordScales.includes(s))
+  if (validScales.length === 0) { return utils.randFromArray(acceptableScales) }
+  return utils.randFromArray(validScales)
 }
 
 function appendOctaveInteger(v, octave) {
