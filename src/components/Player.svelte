@@ -10,34 +10,42 @@
   let loopCount = -1
 
   var bass = new Tone.MonoSynth({
-    volume: 15,
+    volume: 6,
     frequency: 'C2',
     oscillator: {
-      type: 'sawtooth'
+      type: 'triangle'
     },
     filter: {
-      Q: 1,
+      Q: 0,
       type: 'lowpass',
       rolloff: -24,
-      frequency: 400
+      frequency: 280
     },
     envelope: {
-      attack: 0.01,
-      decay: 0.3,
-      sustain: 0.4,
-      release: 0.8
+      attack: 0.04,
+      decay: 0.25,
+      sustain: 0.08,
+      release: 0.2
     },
     filterEnvelope: {
       attack: 0.01,
-      decay: 0.2,
-      sustain: 0.3,
-      release: 0.5,
-      baseFrequency: 150,
-      octaves: 1.5
+      decay: 0.15,
+      sustain: 0.1,
+      release: 0.3,
+      baseFrequency: 120,
+      octaves: 0.8
     }
   })
 
-  var reverb = new Tone.Reverb({decay: 0.3})
+  var reverb = new Tone.Reverb({decay: 0.3, wet: 0.15})
+  var compressor = new Tone.Compressor({
+    threshold: -24,
+    ratio: 4,
+    attack: 0.005,
+    release: 0.15,
+    knee: 6
+  })
+  compressor.set({volume: 3})
   var tremelo = new Tone.Tremolo({
     frequency: 10,
     type: 'sine',
@@ -45,7 +53,7 @@
     spread: 4,
     wet: 0
   })
-  bass.chain(reverb, tremelo, Tone.Destination)
+  bass.chain(reverb, compressor, tremelo, Tone.Destination)
 
   let sw, notesToPlay, loop, totalBeatCount
 
