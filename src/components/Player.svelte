@@ -2,6 +2,7 @@
   import * as Tone from 'tone'
   import SongWriter from './../lib/SongWriter.js'
   import Score from './Score.svelte'
+  import Controls from './Controls.svelte'
 
   window.Tone = Tone
 
@@ -132,9 +133,7 @@
   restart()
 </script>
 
-<button type="button" class="btn btn-info btn-lg" data-toggle="button"
-    on:click={togglePlay}
-          id='play-pause'>{buttonText}</button>
+<Controls {bass} {reverb} {tremelo} {Tone} {playing} {buttonText} onTogglePlay={togglePlay} />
 {#if sw}
   <Score songWriter={sw} {currentBeatNumber}></Score>
 {/if}
