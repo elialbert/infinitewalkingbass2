@@ -55,12 +55,12 @@
   bass.chain(reverb, compressor, tremelo, Tone.Destination)
 
   let sw, notesToPlay, loop, totalBeatCount
-
+  let nextSw, nextNotesToPlay, nextLoop, nextTotalBeatCount
 
   let playing = false;
   let buttonText = 'Play'
 
-  Tone.Transport.bpm.value = 72;
+  Tone.Transport.bpm.value = 67;
 
 
   let currentBeatNumber = -1;
@@ -102,7 +102,7 @@
         }
 
         if (currentBeatNumber == (totalBeatCount - 1)) {
-          loop.clear(); loop.stop()
+          loop.stop()
           return restart(time)
         }
       },
@@ -114,22 +114,50 @@
     });
   }
 
+  function prepareNext() {
+    let nextLoopCount = loopCount + 1
+    nextSw = new SongWriter(nextLoopCount)
+    nextSw.generate()
+    nextSw.notes = nextSw.gather()
+    nextNotesToPlay = nextSw.flatten(nextSw.notes)
+    nextTotalBeatCount = nextNotesToPlay.flat().filter(function (el) {
+      return el != null;
+    }).length
+    nextLoop = makeLoop(nextNotesToPlay)
+  }
+
   function restart(time) {
     currentBeatNumber = -1
     loopCount += 1
-    sw = new SongWriter(loopCount)
-    sw.generate()
-    sw.notes = sw.gather()
-    notesToPlay = sw.flatten(sw.notes)
-    totalBeatCount = notesToPlay.flat().filter(function (el) {
-      return el != null;
-    }).length
-    loop = makeLoop(notesToPlay)
-    if (time) {
-      Tone.Transport.seconds = time
-      // console.log('ready', time, loop, Tone.Transport.seconds, )
-      loop.start(Tone.Transport.nextSubdivision('8n'))
+
+    if (nextLoop) {
+      sw = nextSw
+      notesToPlay = nextNotesToPlay
+      totalBeatCount = nextTotalBeatCount
+      loop = nextLoop
+      nextSw = null
+      nextNotesToPlay = null
+      nextLoop = null
+      nextTotalBeatCount = null
+    } else {
+      sw = new SongWriter(loopCount)
+      sw.generate()
+      sw.notes = sw.gather()
+      notesToPlay = sw.flatten(sw.notes)
+      totalBeatCount = notesToPlay.flat().filter(function (el) {
+        return el != null;
+      }).length
+      loop = makeLoop(notesToPlay)
     }
+
+    if (time) {
+      const eighthNote = Tone.Time('8n').toSeconds()
+      const lookahead = time - Tone.context.currentTime
+      Tone.Transport.seconds = 0
+      loop.start(lookahead + eighthNote)
+    }
+
+    prepareNext()
   }
   restart()
 </script>

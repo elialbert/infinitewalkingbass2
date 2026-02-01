@@ -9,7 +9,7 @@ class TripletChooser {
   }
 
   doTriplet() {
-    const check = utils.chooseWithProbabilities(['yes', 'no'], [65, 35])
+    const check = utils.chooseWithProbabilities(['yes', 'no'], [50, 50])
     if (check === 'no') { return false }
 
     let candidate = false;
