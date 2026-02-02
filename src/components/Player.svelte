@@ -59,6 +59,23 @@
 
   let playing = false;
   let buttonText = 'Play'
+  let speakerType = 'bass'
+
+  function applySpeakerType() {
+    if (speakerType === 'bass') {
+      bass.set({
+        oscillator: { type: 'square' },
+        filter: { Q: 0, frequency: 700, rolloff: -24 },
+        filterEnvelope: { baseFrequency: 150, octaves: 1.5 }
+      })
+    } else {
+      bass.set({
+        oscillator: { type: 'sawtooth' },
+        filter: { Q: 2, frequency: 2500, rolloff: -12 },
+        filterEnvelope: { baseFrequency: 500, octaves: 3.5 }
+      })
+    }
+  }
 
   Tone.Transport.bpm.value = 67;
 
@@ -162,7 +179,64 @@
   restart()
 </script>
 
-<button type="button" class="play-btn" on:click={togglePlay}>{buttonText}</button>
+<div class="controls">
+  <button type="button" class="play-btn" on:click={togglePlay}>{buttonText}</button>
+  <fieldset class="speaker-type">
+    <legend>Speaker type:</legend>
+    <label>
+      <input type="radio" bind:group={speakerType} value="bass" on:change={applySpeakerType}>
+      I have bass
+    </label>
+    <label>
+      <input type="radio" bind:group={speakerType} value="tinny" on:change={applySpeakerType}>
+      Tinny
+    </label>
+  </fieldset>
+</div>
 {#if sw}
   <Score songWriter={sw} {currentBeatNumber}></Score>
 {/if}
+
+<style>
+  .controls {
+    display: inline-flex;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .play-btn {
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: none;
+    color: #333;
+    padding: 0.4rem 1.2rem;
+    font-size: 0.9em;
+    cursor: pointer;
+    margin: 0;
+  }
+  .play-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  .play-btn:active {
+    background: rgba(0, 0, 0, 0.1);
+  }
+  .speaker-type {
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .speaker-type legend {
+    font-size: 0.85em;
+    padding: 0 0.25rem;
+  }
+  .speaker-type label {
+    display: inline;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin: 0;
+  }
+</style>

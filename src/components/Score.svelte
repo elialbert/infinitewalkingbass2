@@ -6,22 +6,20 @@
 <div class='score'>
   <!-- <div>{currentBeatNumber}</div> -->
   {#each songWriter.sections() as section}
-    <div class='section'>Section: {section.part}</div>
+    <div class='section'>{section.part}</div>
     {#each section.lines as line}
       <div class='line'>
         {#each line.bars as bar}
-          <span class='chord flex-child'>
-            {bar.chord}
-          </span>
-        {/each}
-        {#each line.bars as bar}
-          <span class='bar flex-child' class:green={bar.direction == 'up'} class:yellow={bar.direction == 'down'}>
-            {#each bar.beats as beat, i}
-              <span class='beat'>
-                <span class:red={beat.beatNumbers.includes(currentBeatNumber)}>{beat.note}</span> {#if i != bar.beats.length - 1} | {/if}
-              </span>
-            {/each}
-          </span>
+          <div class='bar-group'>
+            <div class='chord'>{bar.chord}</div>
+            <div class='bar' class:green={bar.direction == 'up'} class:yellow={bar.direction == 'down'}>
+              {#each bar.beats as beat, i}
+                <span class='beat'>
+                  <span class:red={beat.beatNumbers.includes(currentBeatNumber)}>{beat.note}</span> {#if i != bar.beats.length - 1} | {/if}
+                </span>
+              {/each}
+            </div>
+          </div>
         {/each}
       </div>
     {/each}
@@ -40,11 +38,13 @@
   .section {
     padding-top: 20px;
     padding-bottom: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
   }
 
   .line {
-    padding-top: 30px;
-    padding-bottom: 30px;
+    padding-top: 20px;
+    padding-bottom: 20px;
     display: flex;
     flex-wrap: wrap
   }
@@ -57,9 +57,15 @@
     padding-top: 4px;
   }
 
-  .flex-child {
-    flex: 1;
-    flex-basis: 25%;
+  .bar-group {
+    flex: 1 1 25%;
+  }
+
+  @media (max-width: 640px) {
+    .bar-group {
+      flex: 0 0 50%;
+      padding-bottom: 0.5rem;
+    }
   }
 
   .red {
