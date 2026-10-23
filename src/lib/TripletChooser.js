@@ -133,7 +133,7 @@ class TripletChooser {
         'middle': [ghost, target, ghost]
       }
       beat1.triplet = beat1.triplet.map((note, i) => ({
-        note: musicUtils.spell(note, this.bar.key, this.bar.chord), ...annotations[pattern][i]
+        note: musicUtils.spell(note, this.bar.key, this.bar.chordAt ? this.bar.chordAt(candidate) : this.bar.chord), ...annotations[pattern][i]
       }))
     }
 

@@ -13,6 +13,11 @@ const SKIP_CHANCE = { inside: 5, beat4: 25, phraseEnd: 35 }
 // skips are ghosted: short and soft, felt more than heard
 const GHOST = { velocity: 0.5, duration: '32n' }
 
+// walking dynamics: a slight push on 2 and 4, a little human variation
+const DYNAMICS = { downbeat: 0.8, backbeat: 0.9, jitter: 0.08 }
+// two-feel pickups sit on the last triplet of a held beat
+const PICKUP = { velocity: 0.6, duration: '16t' }
+
 class Beat {
   constructor(bar, beatIdx) {
     this.bar = bar
@@ -23,6 +28,8 @@ class Beat {
   }
 
   chooseSkip() {
+    // half notes carry their own pickups instead
+    if (this.bar.twoFeel) { return 'no' }
     let chance = SKIP_CHANCE.inside
     if (this.beatIdx == 3) {
       chance = this.bar.barIdx == 3 ? SKIP_CHANCE.phraseEnd : SKIP_CHANCE.beat4
@@ -49,24 +56,60 @@ class Beat {
     return musicUtils.spell(Note.transpose(this.note, interval), this.bar.key, this.bar.chord)
   }
 
-  gather() {
-    this.beatNumbers = [this.bar.line.section.song.beatCounter];
-    this.bar.line.section.song.beatCounter += 1;
-    if (this.octaveBounce !== 'no') {
-      this.beatNumbers.push(this.bar.line.section.song.beatCounter)
-      this.bar.line.section.song.beatCounter += 1;
-      // the skip lands on the last triplet eighth of the beat (swung)
-      return [this.note, null, { note: this.bounceNote(), ...GHOST }]
-    } else if (this.triplet) {
-      this.beatNumbers.push(this.bar.line.section.song.beatCounter)
-      this.bar.line.section.song.beatCounter += 1;
-      this.beatNumbers.push(this.bar.line.section.song.beatCounter)
-      this.bar.line.section.song.beatCounter += 1;
-      // note included in triplet
-      return this.triplet
-    } else {
-      return [this.note]
+  dynamics() {
+    const accent = this.beatIdx % 2 === 1 ? DYNAMICS.backbeat : DYNAMICS.downbeat
+    return { velocity: accent + (utils.random() - 0.5) * DYNAMICS.jitter }
+  }
+
+  // what plays in this beat's slot, subdivided into triplet eighths when
+  // there is more than one event; null is silence (a held note sustains)
+  events() {
+    if (this.held) {
+      return this.pickup ? [null, null, { note: this.pickup, ...PICKUP }] : [null]
     }
+    if (this.bar.twoFeel) {
+      return [{ note: this.note, ...this.dynamics(), duration: '4n' }]
+    }
+    if (this.octaveBounce !== 'no') {
+      // the skip lands on the last triplet eighth of the beat (swung)
+      this.skipNote = this.bounceNote()
+      return [{ note: this.note, ...this.dynamics(), duration: '8t' }, null, { note: this.skipNote, ...GHOST }]
+    }
+    if (this.triplet) {
+      return this.triplet
+    }
+    return [{ note: this.note, ...this.dynamics(), duration: '8n' }]
+  }
+
+  // what the score shows for this beat after gather: the main note, or a
+  // dash for a held two-feel beat, plus any skip, pickup or triplet notes
+  // (small); `beat` is the score beat number each one plays on
+  display() {
+    const nums = this.beatNumbers || []
+    if (this.held) {
+      return [{ text: '–' }, ...(this.pickup ? [{ text: this.pickup, beat: nums[0], small: true }] : [])]
+    }
+    if (this.octaveBounce !== 'no' && this.skipNote) {
+      return [{ text: this.note, beat: nums[0] }, { text: this.skipNote, beat: nums[1], small: true }]
+    }
+    if (this.triplet) {
+      return this.triplet.map((t, i) => ({ text: t.note, beat: nums[i], small: true }))
+    }
+    return [{ text: this.note, beat: nums[0] }]
+  }
+
+  // each sounding note takes the next score beat number and carries it, so
+  // the player highlights exactly the note it is playing
+  gather() {
+    const song = this.bar.line.section.song
+    const events = this.events()
+    this.beatNumbers = []
+    return events.map(event => {
+      if (event === null) { return null }
+      const beat = song.beatCounter++
+      this.beatNumbers.push(beat)
+      return { ...event, beat }
+    })
   }
 }
 

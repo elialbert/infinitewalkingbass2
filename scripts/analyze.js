@@ -47,6 +47,8 @@ const rows = [
   ['…of which not resolved by half step', stats.outsideUnresolved, '%', '< 4%'],
   ['Repeated notes', stats.repeatedNotes, '%', '< 4%'],
   ['Leaps larger than a 5th', stats.leapsOverFifth, '%', '< 5%'],
+  ['Two-chord bars: beat 3 on the 2nd root', stats.splitBeat3Root, '%', '70–95%'],
+  ['Bars in two-feel / pedal', `${(stats.twoFeelBars * 100).toFixed(1)}% / ${(stats.pedalBars * 100).toFixed(1)}%`, 'text', ''],
   ['Beats with a skip note', stats.skipBeats, '%', '8–13%'],
   ['Bars with a triplet figure', stats.tripletBars, '%', '10–15%']
 ]
@@ -57,10 +59,11 @@ function fmt(value, kind) {
 }
 
 function printBars(sw) {
-  console.log(`\n== key ${sw.key}: A ${sw.chordProgA.join(' ')} | B ${sw.chordProgB.join(' ')}`)
+  console.log(`\n== ${sw.formName} in ${sw.key}, chorus ${sw.chorusInKey + 1} of ${sw.chorusesInKey}`)
   sw.sections().forEach(section => section.lines.forEach(line => line.bars.forEach(bar => {
     const extras = bar.beats.map(b => b.octaveBounce !== 'no' ? 'skip' : b.triplet ? 'trip' : '').filter(Boolean)
-    console.log(`${section.part}  ${bar.chord.padEnd(8)} ${bar.direction.padEnd(5)}` +
+    const feel = bar.twoFeel ? 'two' : bar.pedal ? 'pedal' : bar.direction
+    console.log(`${section.part.padEnd(6)} ${bar.chords.join(' ').padEnd(13)} ${feel.padEnd(5)} ` +
       bar.beats.map(b => b.note.padEnd(4)).join(' ') + (extras.length ? `  (${extras.join(',')})` : ''))
   })))
 }

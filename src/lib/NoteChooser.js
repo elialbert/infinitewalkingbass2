@@ -98,7 +98,7 @@ class NoteChooser {
   // beats 2, 3 and 4, chosen together toward the next bar's beat 1
   chooseBeats(recentShapes) {
     const target = this.runNextBarFirstNote()
-    this.pick = new WalkScorer(this.chord).choose(
+    this.pick = new WalkScorer(...(this.barChords || [this.chord])).choose(
       Note.midi(this.chosenFirstNote), Note.midi(target), recentShapes)
     if (this.pick) {
       return this.pick.notes.map(m => Note.fromMidi(m))

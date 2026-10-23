@@ -14,7 +14,7 @@ afterEach(() => utils.setRandom(null))
 
 function makeBeat(randomVal) {
   setRandom(randomVal)
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   const s = new Section(sw, 'a', 0)
   const l = new Line(s, 0)
   const b = new Bar(l, 'Cmaj7', 0)
@@ -25,7 +25,10 @@ it('has a note', () => {
   const beat = makeBeat(0.99)
   beat.generate('C')
   expect(beat.note).toEqual('C')
-  expect(beat.gather()).toEqual(['C'])
+  const [event] = beat.gather()
+  expect(event.note).toEqual('C')
+  expect(event.duration).toEqual('8n')
+  expect(event.beat).toEqual(0)
 })
 
 it('updates note with chooseNote', () => {
@@ -43,7 +46,9 @@ it('gathers with octave bounce', () => {
   beat.generate('C2')
   const result = beat.gather()
   // the skip falls on the last triplet eighth of the beat
-  expect(result).toEqual(['C2', null, { note: 'C3', velocity: 0.5, duration: '32n' }])
+  expect(result[0].note).toEqual('C2')
+  expect(result[1]).toBe(null)
+  expect(result[2]).toEqual({ note: 'C3', velocity: 0.5, duration: '32n', beat: 1 })
 })
 
 it('bounces down instead of up when the note is already high', () => {
@@ -58,9 +63,10 @@ it('gathers with triplet', () => {
   const beat = makeBeat(0.99)
   expect(beat.octaveBounce).toEqual('no')
   beat.generate('C3')
-  beat.triplet = ['C3', 'D3', 'E3']
+  beat.triplet = [{ note: 'C3' }, { note: 'D3' }, { note: 'E3' }]
   const result = beat.gather()
-  expect(result).toEqual(['C3', 'D3', 'E3'])
+  expect(result.map(e => e.note)).toEqual(['C3', 'D3', 'E3'])
+  expect(result.map(e => e.beat)).toEqual([0, 1, 2])
 })
 it('numbers triplet notes consecutively so the score highlight stays in sync', () => {
   const beat = makeBeat(0.99)
@@ -78,4 +84,45 @@ it('ghosts the skip note', () => {
   const skip = beat.gather()[2]
   expect(skip.velocity).toBeLessThan(0.6)
   expect(skip.duration).toEqual('32n')
+})
+
+it('leans on beats 2 and 4', () => {
+  const sw = new SongWriter(0, null, 'ABA')
+  const l = new Line(new Section(sw, 'a', 0), 0)
+  const bar = new Bar(l, 'Cmaj7', 0)
+  utils.seed(4)
+  const velocity = (idx) => {
+    const beat = new Beat(bar, idx)
+    beat.octaveBounce = 'no'
+    beat.generate('C2')
+    return beat.gather()[0].velocity
+  }
+  const avg = (idx) => Array.from({ length: 50 }, () => velocity(idx)).reduce((a, b) => a + b) / 50
+  expect(avg(1)).toBeGreaterThan(avg(0))
+  utils.seed(null)
+})
+
+it('holds two-feel beats, with an optional pickup on the last triplet', () => {
+  const beat = makeBeat(0.99)
+  beat.generate('C2')
+  beat.held = true
+  expect(beat.gather()).toEqual([null])
+  beat.pickup = 'B1'
+  const [a, b, pickup] = beat.gather()
+  expect([a, b]).toEqual([null, null])
+  expect(pickup.note).toEqual('B1')
+})
+
+it('describes itself for the score, numbering each sounding note', () => {
+  const skip = makeBeat(0)
+  skip.generate('C2')
+  skip.gather()
+  expect(skip.display()).toEqual([{ text: 'C2', beat: 0 }, { text: 'C3', beat: 1, small: true }])
+
+  const held = makeBeat(0.99)
+  held.generate('C2')
+  held.held = true
+  held.pickup = 'B1'
+  held.gather()
+  expect(held.display()).toEqual([{ text: '–' }, { text: 'B1', beat: 0, small: true }])
 })

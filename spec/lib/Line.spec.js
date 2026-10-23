@@ -4,46 +4,40 @@ import Section from 'src/lib/Section.js';
 import Line from 'src/lib/Line.js';
 
 it('determines current chord', () => {
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
-  s.chordsToBars = [2, 2, 4]
   const l = new Line(s, 0)
-  expect(s.progression[0]).toEqual('Dm7')
-  expect(s.chordsToBars).toEqual([2, 2, 4])
-  expect(l.currentChord(0)).toEqual(s.progression[0])
+  expect(l.currentChord(0)).toEqual(['Dm7'])
 })
 
 it('determines another chord', () => {
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
-  s.chordsToBars = [2, 2, 4]
   const l = new Line(s, 0)
-  expect(l.currentChord(2)).toEqual('A7')
+  expect(l.currentChord(2)).toEqual(['A7'])
 })
 
 it('determines another chord', () => {
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
-  s.chordsToBars = [2, 2, 4]
   const l = new Line(s, 0)
-  expect(l.currentChord(1)).toEqual('Dm7')
+  expect(l.currentChord(1)).toEqual(['Dm7'])
 })
 
 it('generates beats in bars', () => {
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
-  s.chordsToBars = [2, 2, 4]
   s.barsPerLine = 4
   const l = new Line(s, 1)
-  expect(l.currentChord(4)).toEqual('CMaj7')
+  expect(l.currentChord(4)).toEqual(['CMaj7'])
   // should be 4 bars of CMaj7
   l.generate()
   expect(l.bars.length).toEqual(4)
@@ -54,11 +48,10 @@ it('generates beats in bars', () => {
 })
 
 it('returns next bar within the line', () => {
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
-  s.chordsToBars = [2, 2, 4]
   s.barsPerLine = 4
   const l = new Line(s, 0)
   l.generate()
@@ -68,22 +61,21 @@ it('returns next bar within the line', () => {
 })
 
 it('returns null for nextBar at end of song', () => {
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   sw.generate()
-  const lastSection = sw.sectionC
+  const lastSection = sw.sections()[2]
   const lastLine = lastSection.lines[lastSection.lines.length - 1]
   const lastBarIdx = lastLine.bars.length - 1
   expect(lastLine.nextBar(lastBarIdx)).toBe(null)
 })
 
 it('returns previous bar with lastBar', () => {
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
-  s.chordsToBars = [2, 2, 4]
   s.barsPerLine = 4
   const l = new Line(s, 0)
   l.generate()
@@ -93,11 +85,10 @@ it('returns previous bar with lastBar', () => {
 })
 
 it('returns null for lastBar at first bar with no previous line', () => {
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   const s = new Section(sw, 'a', 0)
-  s.chordsToBars = [2, 2, 4]
   s.barsPerLine = 4
   const l = new Line(s, 0)
   l.generate()
@@ -105,11 +96,11 @@ it('returns null for lastBar at first bar with no previous line', () => {
 })
 
 it('returns last bar of previous line for first bar', () => {
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   sw.chordProgA = ['Dm7', 'A7', 'CMaj7']
   sw.key = 'C'
   sw.generate()
-  const s = sw.sectionA
+  const s = sw.sections()[0]
   const secondLine = s.lines[1]
   const firstLine = s.lines[0]
   expect(secondLine.lastBar(0)).toBe(firstLine.bars[firstLine.bars.length - 1])
@@ -117,9 +108,9 @@ it('returns last bar of previous line for first bar', () => {
 
 it('climbs from a low start and descends from a high one', () => {
   utils.setRandom(() => 0.99) // last arc with any weight: climb when low, descend when high
-  let sw = new SongWriter()
+  let sw = new SongWriter(0, null, 'ABA')
   sw.generate()
-  const line = sw.sectionA.lines[1]
+  const line = sw.sections()[0].lines[1]
   line.bars[0].lastBar.nextBarFirstNote = 'F1'
   line.planArc()
   expect(line.bars.map(b => b.direction)).toEqual(['up', 'up', 'up', 'up'])

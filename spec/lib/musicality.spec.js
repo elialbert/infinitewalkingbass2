@@ -38,6 +38,12 @@ describe.each(results)('seed %i', (seed, stats) => {
     expect(stats.topShapeShare).toBeLessThan(0.05)
   })
 
+  it('lands the second chord of a split bar on its root, and plays heads in two', () => {
+    expect(stats.splitBeat3Root).toBeGreaterThan(0.7)
+    expect(stats.twoFeelBars).toBeGreaterThan(0.05)
+    expect(stats.twoFeelBars).toBeLessThan(0.3)
+  })
+
   it('keeps skip notes and triplets occasional', () => {
     expect(stats.skipBeats).toBeGreaterThan(0.07)
     expect(stats.skipBeats).toBeLessThan(0.14)

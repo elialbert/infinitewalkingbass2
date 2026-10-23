@@ -38,11 +38,13 @@ const awkwardSpelling = /(##|bb|x)\d|^(B#|E#|Cb|Fb)/
 export function generateSongs(songs, seed) {
   utils.seed(seed)
   const result = []
+  let prev = null
   for (let i = 0; i < songs; i++) {
-    const sw = new SongWriter(i)
+    const sw = new SongWriter(i, prev)
     sw.generate()
     sw.notes = sw.gather()
     result.push(sw)
+    prev = sw
   }
   utils.seed(null)
   return result
@@ -57,19 +59,29 @@ export function analyze(songWriters) {
     approaches: 0, approachHalf: 0, approachWhole: 0, approachFourthFifth: 0, approachLeap: 0,
     middle: 0, outside: 0, outsideUnresolved: 0,
     intervals: 0, repeats: 0, bigLeaps: 0,
+    twoFeelBars: 0, pedalBars: 0, splitBars: 0, splitBeat3Root: 0,
     skips: 0, tripletBars: 0, oneDirection: 0, stepwiseRuns: 0, shapes: {},
     intervalHistogram: {}, midis: []
   }
 
   songWriters.forEach(sw => {
-    const bars = sw.sections().flatMap(s => s.lines.flatMap(l => l.bars))
+    // two-feel and pedal bars are counted, but only walking bars are
+    // measured as walking lines
+    const allBars = sw.sections().flatMap(s => s.lines.flatMap(l => l.bars))
+    allBars.forEach(bar => {
+      if (bar.twoFeel) { c.twoFeelBars++ }
+      if (bar.pedal) { c.pedalBars++ }
+    })
+    c.totalBars = (c.totalBars || 0) + allBars.length
+    const bars = allBars.filter(bar => !bar.twoFeel && !bar.pedal)
     const line = []
     bars.forEach((bar, bi) => {
       c.bars++
       const notes = bar.beats.map(b => b.note)
       const midis = notes.map(n => Note.midi(n))
+      const chordAt = (i) => bar.chordAt ? bar.chordAt(i) : bar.chord
       const chordChromas = Chord.get(bar.chord).notes.map(Note.chroma)
-      const inside = insideChromas(bar.chord)
+      const beat3Chromas = Chord.get(chordAt(2)).notes.map(Note.chroma)
 
       bar.beats.forEach(b => {
         c.beats++
@@ -82,13 +94,18 @@ export function analyze(songWriters) {
       })
       if (bar.beats.some(b => b.triplet)) { c.tripletBars++ }
 
-      const prev = bars[bi - 1]
-      if (!prev || prev.chord !== bar.chord) {
+      // the bar actually played before this one (it may be two-feel or a pedal)
+      const prev = bar.lastBar && bar.lastBar.chords ? bar.lastBar : null
+      if (!prev || (prev.chord2 || prev.chord) !== bar.chord) {
         c.changeBars++
         if (chordChromas.includes(Note.chroma(notes[0]))) { c.b1ChordTone++ }
         if (Note.chroma(notes[0]) === chordChromas[0]) { c.b1Root++ }
       }
-      if (chordChromas.includes(Note.chroma(notes[2]))) { c.b3ChordTone++ }
+      if (beat3Chromas.includes(Note.chroma(notes[2]))) { c.b3ChordTone++ }
+      if (bar.chord2) {
+        c.splitBars++
+        if (Note.chroma(notes[2]) === beat3Chromas[0]) { c.splitBeat3Root++ }
+      }
       if ((midis[1] - midis[0]) * (midis[2] - midis[1]) < 0) { c.contourReversal++ }
 
       // the bar's shape: one direction all the way is what makes a line sound
@@ -103,14 +120,14 @@ export function analyze(songWriters) {
       // beats 2 and 3: outside the harmony, and whether they resolve by half step
       ;[1, 2].forEach(k => {
         c.middle++
-        if (!inside.has(Note.chroma(notes[k]))) {
+        if (!insideChromas(chordAt(k)).has(Note.chroma(notes[k]))) {
           c.outside++
           if (Math.abs(midis[k + 1] - midis[k]) !== 1) { c.outsideUnresolved++ }
         }
       })
 
       const next = bars[bi + 1]
-      if (next) {
+      if (next && next === bar.nextBar) {
         c.approaches++
         const d = Math.abs(Note.midi(next.beats[0].note) - midis[3])
         if (d === 1) { c.approachHalf++ }
@@ -118,11 +135,14 @@ export function analyze(songWriters) {
         else if (d === 5 || d === 7) { c.approachFourthFifth++ }
         else if (d > 7) { c.approachLeap++ }
       }
-      line.push(...midis)
+      line.push(midis)
+      if (!next || next !== bar.nextBar) { line.push(null) }
     })
 
-    for (let k = 1; k < line.length; k++) {
-      const d = line[k] - line[k - 1]
+    const flatLine = line.flatMap(m => m === null ? [null] : m)
+    for (let k = 1; k < flatLine.length; k++) {
+      if (flatLine[k] === null || flatLine[k - 1] === null) { continue }
+      const d = flatLine[k] - flatLine[k - 1]
       c.intervals++
       bump(c.intervalHistogram, d)
       if (d === 0) { c.repeats++ }
@@ -162,6 +182,10 @@ export function analyze(songWriters) {
     outsideUnresolved: r(c.outsideUnresolved, c.middle),
     repeatedNotes: r(c.repeats, c.intervals),
     leapsOverFifth: r(c.bigLeaps, c.intervals),
+    twoFeelBars: r(c.twoFeelBars, c.totalBars),
+    pedalBars: r(c.pedalBars, c.totalBars),
+    splitBars: r(c.splitBars, c.bars),
+    splitBeat3Root: r(c.splitBeat3Root, c.splitBars),
     skipBeats: r(c.skips, c.beats),
     tripletBars: r(c.tripletBars, c.bars),
     intervalHistogram: Object.fromEntries(

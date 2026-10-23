@@ -24,31 +24,14 @@ class Line {
   constructor(section, lineIdx) {
     this.section = section
     this.lineIdx = lineIdx
-
-    // set probabilities
-
+    // a two-feel head lasts 8 bars, so every chorus ends walking
+    this.twoFeel = !!section.twoFeel && lineIdx < 2
     this.bars = []
   }
 
-  // given the bar we are currently at in the section,
-  // return the chord we should be playing
+  // the chords of a bar, by its position in the section
   currentChord(sectionBarIdx) {
-    let sum = 0;
-    let chordIndex = null;
-    this.section.chordsToBars.forEach(function(chordInt, chordsToBarsIndex) {
-      if (chordIndex == null) {
-        if (sum == sectionBarIdx) {
-          chordIndex = chordsToBarsIndex
-        } else if (sum > sectionBarIdx) {
-          chordIndex = chordsToBarsIndex - 1
-        } else {
-          sum += chordInt
-        }
-      }
-    })
-    // falls through to last chord
-    if (chordIndex == null) { chordIndex = this.section.chordsToBars.length - 1}
-    return this.section.progression[chordIndex]
+    return this.section.bars[sectionBarIdx]
   }
 
   nextBar(barIdx) {
@@ -65,7 +48,8 @@ class Line {
     if (barIdx !== 0) {
       return this.bars[barIdx - 1]
     }
-    if (!this.lastLine) { return null }
+    // the first bar of a chorus continues from the previous chorus, if any
+    if (!this.lastLine) { return this.section.song.carryOver || null }
     return this.lastLine.bars[this.lastLine.bars.length - 1]
   }
 

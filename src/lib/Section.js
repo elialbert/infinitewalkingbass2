@@ -1,22 +1,18 @@
 import Line from './Line.js'
+import Forms from './Forms.js'
 
 class Section {
-  constructor(song, part, sectionIdx) {
+  // bars: one entry per bar, each [chord] or [chord, chord]
+  constructor(song, part, sectionIdx, bars, twoFeel = false) {
     this.song = song
     this.part = part
     this.sectionIdx = sectionIdx
-
-    this.lineCount = part == 'a' ? 2 : 3
-    this.lines = []
+    // without bars, this is that section of the original ABA form
+    this.bars = bars || Forms.build('ABA', song.key, song.chordProgA, song.chordProgB)[part == 'a' ? 0 : 1].bars
+    this.twoFeel = twoFeel
     this.barsPerLine = 4
-
-    // quick repeat mode
-    // this.barsPerLine = 1
-    // this.lineCount = 2
-
-    this.progression = part == 'a' ? this.song.chordProgA : this.song.chordProgB
-    this.chordCount = this.progression.length
-    this.chordsToBars = this.generateChordsToBars()
+    this.lineCount = Math.ceil(this.bars.length / this.barsPerLine)
+    this.lines = []
   }
 
   nextLine(lineIdx) {
@@ -28,22 +24,7 @@ class Section {
     return null
   }
 
-  generateChordsToBars() {
-    if (this.lineCount == 2) {
-      if (this.progression.length == 3) { return [2, 2, 4] }
-      if (this.progression.length == 4) { return [2, 2, 2, 2] }
-      if (this.progression.length == 6) { return [2, 2, 1, 1, 1, 1] }
-    }
-
-    if (this.lineCount == 3) {
-      if (this.progression.length == 3) { return [4, 4, 4] }
-      if (this.progression.length == 4) { return [3, 3, 3, 3] }
-      if (this.progression.length == 6) { return [2, 2, 2, 2, 2, 2] }
-    }
-  }
-
   generate() {
-    // console.log('generating section', this.part, this.barsPerLine, this.progression, this.chordsToBars)
     // link to the previous section so its last bar's beat 4 approaches
     // this section's first note
     const prev = this.song.prevSection(this.sectionIdx)

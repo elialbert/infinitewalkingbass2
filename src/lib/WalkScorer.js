@@ -44,12 +44,12 @@ export const CELLS = {
 // score weights; the softmax temperature sets how adventurous the pick is
 export const WEIGHTS = {
   temperature: 0.8,
-  beat3ChordTone: 0.8,
+  beat3ChordTone: 0.6,
   beat3Chromatic: -0.5,
   beat2ChordTone: 0.5,
   beat2Inside: 0.5,
   approachHalfStep: 1.6,
-  approachWholeStep: 1.3,
+  approachWholeStep: 1.2,
   approachFourthFifth: 0.6,
   approachThird: 0.3,
   approachLeap: -3,
@@ -63,6 +63,7 @@ export const WEIGHTS = {
   reversal: -1.2,
   extraLeap: -1.5,
   sameShape: -1.5,
+  splitRoot: 2.5,
   cellStart: 1,
   cellWhole: 0.5
 }
@@ -89,22 +90,33 @@ function tokenSemis(degs, token) {
   return token.endsWith('-') ? degs[token.slice(0, -1)] - 12 : degs[token]
 }
 
+// what counts as a chord tone, inside, and a vocabulary cell over one chord
+function harmony(chord) {
+  const c = Chord.get(chord)
+  const chordChromas = new Set(c.notes.map(Note.chroma))
+  const inside = new Set(chordChromas)
+  Scale.get(`${c.tonic} ${MODE[c.type] || 'major'}`).notes.forEach(n => inside.add(Note.chroma(n)))
+  const degs = degrees(chord)
+  // cells whose degrees collapse (e.g. b3 over a minor chord) don't apply
+  const cells = Object.entries(CELLS)
+    .map(([name, tokens]) => [name, tokens.map(t => tokenSemis(degs, t))])
+    .filter(([, semis]) => new Set(semis).size === semis.length)
+  return { rootChroma: Note.chroma(c.tonic), chordChromas, inside, cells }
+}
+
 class WalkScorer {
-  constructor(chord) {
-    const c = Chord.get(chord)
-    this.rootChroma = Note.chroma(c.tonic)
-    this.chordChromas = new Set(c.notes.map(Note.chroma))
-    this.inside = new Set(this.chordChromas)
-    Scale.get(`${c.tonic} ${MODE[c.type] || 'major'}`).notes.forEach(n => this.inside.add(Note.chroma(n)))
-    const degs = degrees(chord)
-    // cells whose degrees collapse (e.g. b3 over a minor chord) don't apply
-    this.cells = Object.entries(CELLS)
-      .map(([name, tokens]) => [name, tokens.map(t => tokenSemis(degs, t))])
-      .filter(([, semis]) => new Set(semis).size === semis.length)
+  // chord2, if given, sounds on beats 3 and 4
+  constructor(chord, chord2) {
+    this.split = !!chord2
+    const first = harmony(chord)
+    const second = chord2 ? harmony(chord2) : first
+    Object.assign(this, first)
+    // the harmony under beats 1 to 4
+    this.byBeat = [first, first, second, second]
   }
 
-  isChordTone(midi) { return this.chordChromas.has(midi % 12) }
-  isInside(midi) { return this.inside.has(midi % 12) }
+  isChordTone(midi, beat = 0) { return this.byBeat[beat].chordChromas.has(midi % 12) }
+  isInside(midi, beat = 0) { return this.byBeat[beat].inside.has(midi % 12) }
 
   // all candidate [beat2, beat3, beat4] from beat 1 toward the next bar's beat 1
   candidates(first, target) {
@@ -115,14 +127,16 @@ class WalkScorer {
       for (let b3 = b2 - 7; b3 <= b2 + 7; b3++) {
         if (!inRange(b3)) { continue }
         // a chromatic note arrives by step or small skip and leaves by half step
-        if (!this.isInside(b2) && (Math.abs(b2 - first) > 4 || Math.abs(b3 - b2) !== 1)) { continue }
-        if (!this.isInside(b3) && Math.abs(b3 - b2) > 4) { continue }
+        if (!this.isInside(b2, 1) && (Math.abs(b2 - first) > 4 || Math.abs(b3 - b2) !== 1)) { continue }
+        if (!this.isInside(b3, 2) && Math.abs(b3 - b2) > 4) { continue }
+        // the second chord of a split bar arrives on a fresh chord tone
+        if (this.split && (!this.isChordTone(b3, 2) || b3 === b2)) { continue }
         APPROACHES.forEach(a => {
           const b4 = target + a
           if (!inRange(b4) || Math.abs(b4 - b3) > 12) { return }
-          if (!this.isInside(b3) && Math.abs(b4 - b3) !== 1) { return }
+          if (!this.isInside(b3, 2) && Math.abs(b4 - b3) !== 1) { return }
           // an outside beat 4 must lead into the target by step
-          if (!this.isInside(b4) && (Math.abs(a) > 2 || Math.abs(b4 - b3) > 5)) { return }
+          if (!this.isInside(b4, 3) && (Math.abs(a) > 2 || Math.abs(b4 - b3) > 5)) { return }
           result.push([b2, b3, b4])
         })
       }
@@ -132,6 +146,7 @@ class WalkScorer {
 
   // the cell this bar plays, if any: [name, wholeCellMatched]
   matchCell(notes) {
+    if (this.split) { return [null, false] }
     for (const [name, semis] of this.cells) {
       const root = notes[0] - semis[0]
       if ((root - this.rootChroma) % 12 !== 0) { continue }
@@ -148,8 +163,9 @@ class WalkScorer {
     const [b2, b3, b4] = cand
     let s = 0
 
-    if (this.isChordTone(b3)) { s += W.beat3ChordTone } else if (!this.isInside(b3)) { s += W.beat3Chromatic }
-    if (this.isChordTone(b2)) { s += W.beat2ChordTone } else if (this.isInside(b2)) { s += W.beat2Inside }
+    if (this.isChordTone(b3, 2)) { s += W.beat3ChordTone } else if (!this.isInside(b3, 2)) { s += W.beat3Chromatic }
+    if (this.split && b3 % 12 === this.byBeat[2].rootChroma) { s += W.splitRoot }
+    if (this.isChordTone(b2, 1)) { s += W.beat2ChordTone } else if (this.isInside(b2, 1)) { s += W.beat2Inside }
 
     const approach = Math.abs(target - b4)
     if (approach === 1) { s += W.approachHalfStep }
