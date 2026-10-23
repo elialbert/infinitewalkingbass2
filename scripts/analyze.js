@@ -9,6 +9,7 @@ import fs from 'fs'
 import midiPkg from '@tonejs/midi'
 import { Note } from 'tonal'
 import { analyze, generateSongs } from './metrics.js'
+import { articulate } from '../src/lib/Articulation.js'
 
 const { Midi } = midiPkg
 
@@ -79,17 +80,14 @@ function writeMidi(path) {
   const beatSeconds = 60 / QUARTER_BPM
   let beat = 0
   songWriters.forEach(sw => {
-    sw.flatten(sw.notes).forEach(events => {
+    articulate(sw.flatten(sw.notes)).forEach(events => {
       events.forEach((event, i) => {
         if (event === null) { return }
-        const note = typeof event === 'object' ? event.note : event
-        const velocity = typeof event === 'object' && event.velocity ? event.velocity : 0.8
-        const slot = beatSeconds / events.length
         track.addNote({
-          midi: Note.midi(note),
+          midi: Note.midi(event.note),
           time: (beat + i / events.length) * beatSeconds,
-          duration: slot * 0.95,
-          velocity
+          duration: event.length * beatSeconds,
+          velocity: event.velocity || 0.8
         })
       })
       beat += 1
