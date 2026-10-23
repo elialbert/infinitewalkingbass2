@@ -2,7 +2,7 @@
   import * as Tone from 'tone'
   import SongWriter from './../lib/SongWriter.js'
   import { articulate } from './../lib/Articulation.js'
-  import { setKnobs, KNOB_DEFAULTS } from './../lib/Knobs.js'
+  import { setKnobs, stepDrift, driftSummary, KNOB_DEFAULTS } from './../lib/Knobs.js'
   import { BassRig, DEFAULT_SETTINGS as SOUND_DEFAULTS } from './../audio/BassRig.js'
   import Score from './Score.svelte'
   import Dials from './Dials.svelte'
@@ -85,8 +85,15 @@
   // the chorus on screen, and the score beat sounding now
   let sw = writeChorus(null)
   let currentBeatNumber = -1
+  // which line dials have drifted, for the dials panel
+  let drift = ''
 
+  // each chorus after the first drifts the line dials a little
   function writeChorus(prev) {
+    if (prev) {
+      stepDrift()
+      drift = driftSummary()
+    }
     const song = new SongWriter(0, prev)
     song.generate()
     song.notes = song.gather()
@@ -198,7 +205,7 @@
   </button>
 </div>
 {#if dialsOpen}
-  <Dials bind:settings {rig} defaults={DEFAULT_SETTINGS}></Dials>
+  <Dials bind:settings {rig} {drift} defaults={DEFAULT_SETTINGS}></Dials>
 {/if}
 {#if sw}
   <Score songWriter={sw} {currentBeatNumber}></Score>

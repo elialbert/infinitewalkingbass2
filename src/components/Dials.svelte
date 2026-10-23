@@ -4,6 +4,8 @@
   export let settings
   export let rig
   export let defaults
+  // line dials nudged past their settings as the choruses go by
+  export let drift = ''
 
   const pct = v => `${Math.round(v)}%`
   const ms = v => `${v > 0 ? '+' : ''}${v} ms`
@@ -145,6 +147,7 @@
           <button type="button" class="btn reset" on:click={() => reset(group.dials.map(d => d.key))}>reset</button>
         </legend>
         {#if group.note}<p class="note">{group.note}</p>{/if}
+        {#if group.name === 'Lines' && drift}<p class="note">drifting: {drift}</p>{/if}
         {#each group.dials as d}
           <label class="dial" title={d.hint || ''}>
             <span class="name">{d.label}</span>
