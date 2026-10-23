@@ -39,8 +39,8 @@ describe.each(results)('seed %i', (seed, stats) => {
   })
 
   it('keeps skip notes and triplets occasional', () => {
-    expect(stats.skipBeats).toBeGreaterThan(0.03)
-    expect(stats.skipBeats).toBeLessThan(0.08)
+    expect(stats.skipBeats).toBeGreaterThan(0.07)
+    expect(stats.skipBeats).toBeLessThan(0.14)
     expect(stats.tripletBars).toBeGreaterThan(0.08)
     expect(stats.tripletBars).toBeLessThan(0.17)
   })

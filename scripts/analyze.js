@@ -47,7 +47,7 @@ const rows = [
   ['…of which not resolved by half step', stats.outsideUnresolved, '%', '< 4%'],
   ['Repeated notes', stats.repeatedNotes, '%', '< 4%'],
   ['Leaps larger than a 5th', stats.leapsOverFifth, '%', '< 5%'],
-  ['Beats with a skip note', stats.skipBeats, '%', '3–8%'],
+  ['Beats with a skip note', stats.skipBeats, '%', '8–13%'],
   ['Bars with a triplet figure', stats.tripletBars, '%', '10–15%']
 ]
 

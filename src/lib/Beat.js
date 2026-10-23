@@ -7,8 +7,8 @@ const SKIP_UP_LIMIT = Note.midi('A2')
 const SKIP_DOWN_LIMIT = Note.midi('E2')
 
 // chance of a skip note, in percent: rare inside the bar, likelier on beat 4,
-// likeliest on beat 4 at the end of a 4-bar phrase. Averages about 5% of beats.
-const SKIP_CHANCE = { inside: 2, beat4: 12, phraseEnd: 20 }
+// likeliest on beat 4 at the end of a 4-bar phrase. Averages about 10% of beats.
+const SKIP_CHANCE = { inside: 5, beat4: 25, phraseEnd: 35 }
 
 // skips are ghosted: short and soft, felt more than heard
 const GHOST = { velocity: 0.5, duration: '32n' }
