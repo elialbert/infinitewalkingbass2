@@ -3,7 +3,7 @@
 </script>
 
 <main>
-  <h1>Infinite Walking Bass Generator 2</h1>
+  <h1>Infinite Walking Bass Generator 3</h1>
   <Player></Player>
 </main>
 
