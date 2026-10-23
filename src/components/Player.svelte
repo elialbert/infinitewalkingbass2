@@ -20,14 +20,21 @@
   const transport = Tone.getTransport()
   const draw = Tone.getDraw()
 
-  const STORAGE_KEY = 'iwb-dials'
+  // only dials moved off their defaults are saved, so a retuned default
+  // still reaches anyone who never touched that dial
+  const STORAGE_KEY = 'iwb-dials-changed'
   function loadSettings() {
     try {
+      localStorage.removeItem('iwb-dials')
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY))
       return { ...DEFAULT_SETTINGS, ...(saved || {}) }
     } catch (e) {
       return { ...DEFAULT_SETTINGS }
     }
+  }
+  function saveSettings(s) {
+    const changed = Object.fromEntries(Object.entries(s).filter(([k, v]) => v !== DEFAULT_SETTINGS[k]))
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(changed)) } catch (e) {}
   }
 
   let settings = loadSettings()
@@ -36,7 +43,7 @@
   $: transport.bpm.value = settings.tempo / 2
   $: {
     rig.apply(settings)
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)) } catch (e) {}
+    saveSettings(settings)
   }
   // only the feel dials change note lengths; moving any other dial keeps
   // the lengths already drawn
@@ -129,11 +136,7 @@
       Tinny
     </label>
   </fieldset>
-  <label class="tempo">
-    <span>Tempo {settings.tempo}</span>
-    <input type="range" min="80" max="320" step="2" bind:value={settings.tempo}>
-  </label>
-  <button type="button" class="play-btn dials-btn" class:open={dialsOpen}
+  <button type="button" class="play-btn"
     aria-expanded={dialsOpen} on:click={() => dialsOpen = !dialsOpen}>
     Dials {dialsOpen ? '▴' : '▾'}
   </button>
@@ -167,7 +170,7 @@
   .play-btn:hover {
     background: rgba(0, 0, 0, 0.05);
   }
-  .play-btn:active, .dials-btn.open {
+  .play-btn:active {
     background: rgba(0, 0, 0, 0.1);
   }
   .speaker-type {
@@ -182,17 +185,6 @@
   .speaker-type legend {
     font-size: 0.85em;
     padding: 0 0.25rem;
-  }
-  .tempo {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9em;
-    margin: 0;
-  }
-  .tempo span {
-    min-width: 5.5em;
-    text-align: left;
   }
   .speaker-type label {
     display: inline;

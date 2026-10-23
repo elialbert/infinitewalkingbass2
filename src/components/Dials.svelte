@@ -41,6 +41,8 @@
         { key: 'brightness', label: 'Brightness', min: 80, max: 1500, step: 10, fmt: v => `${v} Hz` },
         { key: 'pluck', label: 'Pluck', min: 0, max: 5, step: 0.1, fmt: v => `${Number(v).toFixed(1)} oct`,
           hint: 'how far the filter snaps open' },
+        { key: 'honk', label: 'Honk', min: 0, max: 8, step: 0.1, fmt: v => `Q ${Number(v).toFixed(1)}`,
+          hint: 'filter resonance; turn up for froggy' },
         { key: 'ring', label: 'Ring', min: 0.15, max: 3, step: 0.05, fmt: v => `${Number(v).toFixed(2)} s` },
         { key: 'bite', label: 'String bite', min: 0, max: 60, step: 1, fmt: v => `${v} ¢` },
         { key: 'fingerNoise', label: 'Finger noise', min: 0, max: 1, step: 0.01, fmt: v => pct(v * 100) }
@@ -113,7 +115,7 @@
       <canvas class="scope" bind:this={canvas}></canvas>
       <div class="meter" title="output level"><div style="width: {levelPct}%"></div></div>
     </div>
-    <button type="button" on:click={() => reset(Object.keys(defaults).filter(k => k !== 'tempo'))}>
+    <button type="button" class="btn" on:click={() => reset(Object.keys(defaults).filter(k => k !== 'tempo'))}>
       Reset all
     </button>
   </div>
@@ -122,7 +124,7 @@
       <fieldset class="group">
         <legend>
           {group.name}
-          <button type="button" class="reset" on:click={() => reset(group.dials.map(d => d.key))}>reset</button>
+          <button type="button" class="btn reset" on:click={() => reset(group.dials.map(d => d.key))}>reset</button>
         </legend>
         {#each group.dials as d}
           <label class="dial" title={d.hint || ''}>
@@ -160,8 +162,25 @@
     gap: 0.5rem;
     margin: 0;
   }
-  .preset select, .top button {
+  .preset select {
     margin: 0;
+  }
+  /* the same outlined look as the Play and Dials buttons */
+  .btn {
+    border: 1px solid #555;
+    border-radius: 4px;
+    background: none;
+    color: #333;
+    padding: 0.4rem 1.2rem;
+    font-size: 0.9em;
+    cursor: pointer;
+    margin: 0;
+  }
+  .btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  .btn:active {
+    background: rgba(0, 0, 0, 0.1);
   }
   .scope-wrap {
     flex: 1;
@@ -203,19 +222,12 @@
     font-size: 0.85em;
     padding: 0 0.25rem;
   }
-  .reset {
+  .btn.reset {
     font-weight: normal;
     text-transform: none;
-    border: none;
-    background: none;
-    color: #888;
-    padding: 0 0.25rem;
-    margin: 0;
-    cursor: pointer;
-    font-size: 0.9em;
-  }
-  .reset:hover {
-    color: #333;
+    padding: 0 0.5rem;
+    margin-left: 0.25rem;
+    font-size: 0.85em;
   }
   .dial {
     display: grid;
