@@ -28,27 +28,14 @@ it('has next line', () => {
   expect(nl3).toBe(null)
 })
 
-it('has last line for each line besides the first', () => {
+it('links each line to the one before it, across sections', () => {
   let sw = new SongWriter()
   sw.generate()
   const s = sw.sectionB
-  expect(s.lines[0].lastLine).toBe(undefined)
+  expect(sw.sectionA.lines[0].lastLine).toBe(undefined)
+  expect(s.lines[0].lastLine).toBe(sw.sectionA.lines[sw.sectionA.lines.length - 1])
   expect(s.lines[1].lastLine.lineIdx).toEqual(s.lines[0].lineIdx)
   expect(s.lines[2].lastLine.lineIdx).toEqual(s.lines[1].lineIdx)
-})
-
-it('returns a direction hint', () => {
-  let sw = new SongWriter()
-  const s = new Section(sw, 'a', 0)
-  const hint = s.getDirectionHint('down')
-  expect(['up', 'down']).toContain(hint)
-})
-
-it('defaults direction to down when no current direction', () => {
-  utils.setRandom(() => 0.99) // probability -> 'stay'
-  let sw = new SongWriter()
-  const s = new Section(sw, 'a', 0)
-  expect(s.getDirectionHint(null)).toEqual('down')
 })
 
 it('maps chords to bars for part a with 3 chords', () => {

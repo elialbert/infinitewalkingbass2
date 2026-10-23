@@ -1,3 +1,4 @@
+import utils from 'src/lib/utils.js'
 import SongWriter from 'src/lib/SongWriter.js';
 import Section from 'src/lib/Section.js';
 import Line from 'src/lib/Line.js';
@@ -113,3 +114,18 @@ it('returns last bar of previous line for first bar', () => {
   const firstLine = s.lines[0]
   expect(secondLine.lastBar(0)).toBe(firstLine.bars[firstLine.bars.length - 1])
 })
+
+it('climbs from a low start and descends from a high one', () => {
+  utils.setRandom(() => 0.99) // last arc with any weight: climb when low, descend when high
+  let sw = new SongWriter()
+  sw.generate()
+  const line = sw.sectionA.lines[1]
+  line.bars[0].lastBar.nextBarFirstNote = 'F1'
+  line.planArc()
+  expect(line.bars.map(b => b.direction)).toEqual(['up', 'up', 'up', 'up'])
+  line.bars[0].lastBar.nextBarFirstNote = 'C3'
+  line.planArc()
+  expect(line.bars.map(b => b.direction)).toEqual(['down', 'down', 'down', 'down'])
+})
+
+afterEach(() => utils.setRandom(null))

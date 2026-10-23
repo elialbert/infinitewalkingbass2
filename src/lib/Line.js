@@ -1,4 +1,24 @@
 import Bar from './Bar.js'
+import utils from './utils.js'
+import { Note } from 'tonal'
+
+// a line is one 4-bar phrase; its bars' directions trace one of these arcs
+const ARCS = [
+  ['up', 'up', 'down', 'down'], // rise and fall
+  ['up', 'up', 'up', 'down'],
+  ['down', 'down', 'up', 'up'], // fall and rise
+  ['down', 'down', 'down', 'up'],
+  ['up', 'up', 'up', 'up'], // climb
+  ['down', 'down', 'down', 'down'] // descend
+]
+// arc weights by where the phrase starts: climb from low, fall from high
+const ARC_WEIGHTS = {
+  low: [25, 25, 5, 0, 45, 0],
+  middle: [20, 15, 20, 15, 15, 15],
+  high: [5, 0, 25, 25, 0, 45]
+}
+const LOW_START = Note.midi('A1')
+const HIGH_START = Note.midi('A2')
 
 class Line {
   constructor(section, lineIdx) {
@@ -58,12 +78,23 @@ class Line {
       let bar = new Bar(this, curChord, barIdx)
       bar.generate()
       bar.lastBar = this.lastBar(barIdx)
-      bar.direction = this.section.getDirectionHint(bar.lastBar && bar.lastBar.direction)
       this.bars.push(bar)
     })
   }
 
+  // pick the phrase's arc once its starting note is known
+  planArc() {
+    const first = this.bars[0].lastBar && this.bars[0].lastBar.nextBarFirstNote
+    const midi = first ? Note.midi(first) : null
+    let zone = 'middle'
+    if (midi !== null && midi <= LOW_START) { zone = 'low' }
+    if (midi !== null && midi >= HIGH_START) { zone = 'high' }
+    const arc = utils.chooseWithProbabilities(ARCS, ARC_WEIGHTS[zone])
+    this.bars.forEach((bar, i) => { bar.direction = arc[i % arc.length] })
+  }
+
   gather() {
+    this.planArc()
     return this.bars.map(function(bar) {
       return bar.gather()
     })

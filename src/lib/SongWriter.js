@@ -16,6 +16,10 @@ class SongWriter {
     if (sectionIdx == 1) { return this.sectionC }
   }
 
+  prevSection(sectionIdx) {
+    return this.sections()[sectionIdx - 1]
+  }
+
   generate() {
     this.sectionA = new Section(this, 'a', 0)
     this.sectionB = new Section(this, 'b', 1)
