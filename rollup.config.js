@@ -36,7 +36,7 @@ function serve() {
 export default {
 	input: 'src/main.ts',
 	onwarn(warning, warn) {
-		if (warning.code === 'CIRCULAR_DEPENDENCY' && warning.ids?.some(id => id.includes('node_modules/tone'))) {
+		if (warning.code === 'CIRCULAR_DEPENDENCY' && warning.ids?.some(id => id.includes('node_modules/tone') || id.includes('node_modules/svelte'))) {
 			return;
 		}
 		warn(warning);
