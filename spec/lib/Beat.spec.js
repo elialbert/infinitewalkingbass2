@@ -37,20 +37,20 @@ it('updates note with chooseNote', () => {
 })
 
 it('gathers with octave bounce', () => {
-  // random=0 -> getRandomIntInclusive(1,100)=1, prob [10,10,17,63] -> '8M'
+  // random=0 -> getRandomIntInclusive(1,100)=1 -> skip 'yes', then '8M'
   const beat = makeBeat(0)
   expect(beat.octaveBounce).toEqual('8M')
   beat.generate('C2')
   const result = beat.gather()
   // the skip falls on the last triplet eighth of the beat
-  expect(result).toEqual(['C2', null, 'C3'])
+  expect(result).toEqual(['C2', null, { note: 'C3', velocity: 0.5, duration: '32n' }])
 })
 
 it('bounces down instead of up when the note is already high', () => {
   const beat = makeBeat(0)
   expect(beat.octaveBounce).toEqual('8M')
   beat.generate('C3')
-  expect(beat.gather()).toEqual(['C3', null, 'C2'])
+  expect(beat.gather()[2].note).toEqual('C2')
 })
 
 it('gathers with triplet', () => {
@@ -70,4 +70,12 @@ it('numbers triplet notes consecutively so the score highlight stays in sync', (
   beat.gather()
   expect(beat.beatNumbers).toEqual([10, 11, 12])
   expect(beat.bar.line.section.song.beatCounter).toEqual(13)
+})
+
+it('ghosts the skip note', () => {
+  const beat = makeBeat(0)
+  beat.generate('C2')
+  const skip = beat.gather()[2]
+  expect(skip.velocity).toBeLessThan(0.6)
+  expect(skip.duration).toEqual('32n')
 })

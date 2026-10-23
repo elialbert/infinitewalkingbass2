@@ -17,7 +17,7 @@ function makeMockBar(direction, notes) {
 }
 
 it('skips triplet when probability says no', () => {
-  setRandom(0.99) // getRandomIntInclusive(1,100)=100, sum 65<100 -> 'no'
+  setRandom(0.99) // getRandomIntInclusive(1,100)=100, 12 < 100 -> 'no'
   const bar = makeMockBar('up')
   new TripletChooser(bar)
   bar.beats.forEach(b => expect(b.triplet).toBe(false))

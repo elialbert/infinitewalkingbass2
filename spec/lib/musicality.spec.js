@@ -30,6 +30,13 @@ describe.each(results)('seed %i', (seed, stats) => {
     expect(stats.leapsOverFifth).toBeLessThan(0.05)
     expect(stats.repeatedNotes).toBeLessThan(0.04)
   })
+
+  it('keeps skip notes and triplets occasional', () => {
+    expect(stats.skipBeats).toBeGreaterThan(0.03)
+    expect(stats.skipBeats).toBeLessThan(0.08)
+    expect(stats.tripletBars).toBeGreaterThan(0.08)
+    expect(stats.tripletBars).toBeLessThan(0.17)
+  })
 })
 
 it('is reproducible for a given seed', () => {

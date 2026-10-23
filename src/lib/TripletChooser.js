@@ -9,7 +9,9 @@ class TripletChooser {
   }
 
   doTriplet() {
-    const check = utils.chooseWithProbabilities(['yes', 'no'], [50, 50])
+    // triplets are an occasional approach figure; the last free beat (usually
+    // beat 4, leading into the next bar) gets it
+    const check = utils.chooseWithProbabilities(['yes', 'no'], [12, 88])
     if (check === 'no') { return false }
 
     let candidate = false;
