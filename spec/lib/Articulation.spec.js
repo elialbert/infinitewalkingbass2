@@ -46,17 +46,28 @@ it('keeps skips and pickups short and leaves silence alone', () => {
 })
 
 it('lets two-feel half notes ring or lifts them early', () => {
-  const half = [[{ note: 'C2', velocity: 0.8, duration: '4n' }], [null], q('G2')]
+  const half = () => [[{ note: 'C2', velocity: 0.8, duration: '4n' }], [null], q('G2')]
   utils.setRandom(() => 0.99)
-  expect(articulate(half)[0][0].length).toBeCloseTo(2 * DEFAULTS.legato)
+  expect(articulate(half())[0][0].length).toBeCloseTo(2 * DEFAULTS.legato)
   utils.setRandom(() => 0)
-  expect(articulate(half)[0][0]).toMatchObject({ length: 1.5, mute: true })
+  expect(articulate(half())[0][0]).toMatchObject({ length: 1.5, mute: true })
 })
 
 it('respects settings', () => {
   utils.setRandom(() => 0.5)
   const out = articulate([q('C2'), q('D2'), q('E2')], { shortChance: 100, shortLength: 0.3 })
   expect(out.map(([e]) => e.length)).toEqual([0.3, 0.3, 0.3])
+})
+
+it('keeps each note\'s draw, so raising a chance only adds short notes', () => {
+  utils.seed(9)
+  const beats = Array.from({ length: 64 }, (_, i) => q(['C2', 'D2', 'E2', 'F2'][i % 4]))
+  const shortAt = (pct) => articulate(beats, { shortChance: pct }).map(([e]) => e.mute)
+  const low = shortAt(10)
+  const high = shortAt(40)
+  expect(shortAt(10)).toEqual(low)
+  low.forEach((isShort, i) => { if (isShort) { expect(high[i]).toBe(true) } })
+  expect(high.filter(Boolean).length).toBeGreaterThan(low.filter(Boolean).length)
 })
 
 it('gives every note of a real chorus a length that ends before the next note', () => {

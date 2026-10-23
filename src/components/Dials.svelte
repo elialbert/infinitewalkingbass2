@@ -35,6 +35,24 @@
       ]
     },
     {
+      name: 'Lines',
+      note: 'rewrites the line from the next bar',
+      dials: [
+        { key: 'skips', label: 'Skip notes', min: 0, max: 4, step: 0.1, fmt: x,
+          hint: 'octave and repeated-note skips' },
+        { key: 'triplets', label: 'Triplets', min: 0, max: 5, step: 0.1, fmt: x },
+        { key: 'pedals', label: 'Pedals', min: 0, max: 5, step: 0.1, fmt: x,
+          hint: 'repeated roots under a dominant' },
+        { key: 'pickups', label: 'Pickups', min: 0, max: 3, step: 0.1, fmt: x,
+          hint: 'short notes leading out of two-feel half notes' },
+        { key: 'adventure', label: 'Adventure', min: 0.3, max: 3, step: 0.05, fmt: x,
+          hint: 'how far from the most textbook bar it strays' },
+        { key: 'chromatic', label: 'Chromatic', min: -3, max: 3, step: 0.1,
+          fmt: v => `${v > 0 ? '+' : ''}${Number(v).toFixed(1)}`,
+          hint: 'favor (+) or avoid (−) notes outside the chord scale' }
+      ]
+    },
+    {
       name: 'Tone',
       dials: [
         { key: 'octave', label: 'Octave', min: -1, max: 2, step: 1, fmt: v => v > 0 ? `+${v}` : `${v}` },
@@ -126,6 +144,7 @@
           {group.name}
           <button type="button" class="btn reset" on:click={() => reset(group.dials.map(d => d.key))}>reset</button>
         </legend>
+        {#if group.note}<p class="note">{group.note}</p>{/if}
         {#each group.dials as d}
           <label class="dial" title={d.hint || ''}>
             <span class="name">{d.label}</span>
@@ -247,6 +266,11 @@
     font-variant-numeric: tabular-nums;
     color: #555;
     white-space: nowrap;
+  }
+  .note {
+    color: #888;
+    font-size: 0.85em;
+    margin: 0 0 0.25rem;
   }
   .tip {
     color: #888;

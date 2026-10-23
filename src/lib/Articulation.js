@@ -20,6 +20,10 @@ const GHOST_DURATIONS = ['32n', '16t']
 // (a fingered stop rather than a natural ring-out) on every event, plus
 // `gap`, the beats until the next note starts.
 // `next` is the first beat of whatever plays afterwards, if known.
+//
+// Each note draws its random number once and keeps it (`roll`, written onto
+// the input event), so articulating again with new settings moves a dial
+// smoothly: raising shortChance only adds short notes, never reshuffles.
 export function articulate(beats, settings = {}, next = null) {
   const s = { ...DEFAULTS, ...settings }
   const onsets = []
@@ -31,6 +35,7 @@ export function articulate(beats, settings = {}, next = null) {
   const following = next && next.find(e => e)
   const out = beats.map(events => events.map(() => null))
   onsets.forEach((onset, k) => {
+    if (onset.event.roll === undefined) { onset.event.roll = utils.random() }
     const after = onsets[k + 1]
     const gap = after ? after.start - onset.start : beats.length - onset.start
     const nextNote = after ? after.event.note : following && following.note
@@ -39,8 +44,8 @@ export function articulate(beats, settings = {}, next = null) {
   return out
 }
 
-function chance(percent) {
-  return utils.random() * 100 < percent
+function chance(event, percent) {
+  return event.roll * 100 < percent
 }
 
 function noteLength(event, gap, nextNote, s) {
@@ -49,11 +54,11 @@ function noteLength(event, gap, nextNote, s) {
   }
   // two-feel half notes: ring through, or lift on the "and" of two
   if (gap >= 2) {
-    if (chance(s.liftChance)) { return { length: 1.5, mute: true } }
+    if (chance(event, s.liftChance)) { return { length: 1.5, mute: true } }
     return { length: gap * s.legato, mute: false }
   }
   // a walking quarter (or longer): sometimes clipped short
-  if (gap >= 1 && chance(s.shortChance)) {
+  if (gap >= 1 && chance(event, s.shortChance)) {
     return { length: Math.min(s.shortLength, gap), mute: true }
   }
   // the same pitch again has to be stopped before it is plucked again

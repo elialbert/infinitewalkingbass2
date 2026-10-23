@@ -1,6 +1,10 @@
 import utils from './utils.js'
 import musicUtils from './musicUtils.js'
 import { Note } from 'tonal'
+import { scaled } from './Knobs.js'
+
+// percent of bars given a triplet approach figure
+const TRIPLET_CHANCE = 12
 
 class TripletChooser {
   constructor(bar) {
@@ -11,7 +15,8 @@ class TripletChooser {
   doTriplet() {
     // triplets are an occasional approach figure; the last free beat (usually
     // beat 4, leading into the next bar) gets it
-    const check = utils.chooseWithProbabilities(['yes', 'no'], [12, 88])
+    const chance = scaled(TRIPLET_CHANCE, 'triplets')
+    const check = utils.chooseWithProbabilities(['yes', 'no'], [chance, 100 - chance])
     if (check === 'no') { return false }
 
     let candidate = false;

@@ -1,6 +1,7 @@
 import utils from './utils.js'
 import musicUtils from './musicUtils.js'
 import { Note } from 'tonal'
+import { scaled } from './Knobs.js'
 
 // skips above this jump down instead of up, and below this jump up
 const SKIP_UP_LIMIT = Note.midi('A2')
@@ -34,6 +35,7 @@ class Beat {
     if (this.beatIdx == 3) {
       chance = this.bar.barIdx == 3 ? SKIP_CHANCE.phraseEnd : SKIP_CHANCE.beat4
     }
+    chance = scaled(chance, 'skips')
     if (utils.chooseWithProbabilities(['yes', 'no'], [chance, 100 - chance]) === 'no') { return 'no' }
     return utils.chooseWithProbabilities(['8M', '-8M', '1P'], [25, 25, 50])
   }

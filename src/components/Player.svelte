@@ -2,7 +2,8 @@
   import * as Tone from 'tone'
   import SongWriter from './../lib/SongWriter.js'
   import { articulate } from './../lib/Articulation.js'
-  import { BassRig, DEFAULT_SETTINGS } from './../audio/BassRig.js'
+  import { setKnobs, KNOB_DEFAULTS } from './../lib/Knobs.js'
+  import { BassRig, DEFAULT_SETTINGS as SOUND_DEFAULTS } from './../audio/BassRig.js'
   import Score from './Score.svelte'
   import Dials from './Dials.svelte'
   window.Tone = Tone
@@ -17,6 +18,12 @@
   // Each walking beat is one Sequence slot. Slots are '8n' long, so the
   // quarter-note tempo shown in the UI is twice the Transport bpm.
   const SLOT = '8n'
+  // every beat is split into three triplet eighths on the schedule, whether
+  // or not it uses them, so a bar can be rewritten after it is scheduled
+  const GRID = 3
+
+  // the sound and feel dials, plus the generator dials
+  const DEFAULT_SETTINGS = { ...SOUND_DEFAULTS, ...KNOB_DEFAULTS }
   const transport = Tone.getTransport()
   const draw = Tone.getDraw()
 
@@ -39,6 +46,8 @@
 
   let settings = loadSettings()
   let dialsOpen = false
+  // before the first chorus is written, so it hears the saved dials
+  setKnobs(settings)
 
   $: transport.bpm.value = settings.tempo / 2
   $: {
@@ -50,6 +59,19 @@
   const FEEL_KEYS = ['legato', 'shortChance', 'shortLength', 'liftChance']
   $: feelKey = FEEL_KEYS.map(k => settings[k]).join()
   $: rearticulate(feelKey)
+
+  // the generator dials rewrite the line from the next bar on, once the
+  // slider has rested for a moment
+  $: knobKey = Object.keys(KNOB_DEFAULTS).map(k => settings[k]).join()
+  let knobTimer
+  let lastKnobKey
+  $: if (knobKey !== lastKnobKey) {
+    const first = lastKnobKey === undefined
+    lastKnobKey = knobKey
+    setKnobs(settings)
+    clearTimeout(knobTimer)
+    if (!first) { knobTimer = setTimeout(regenerateLive, 200) }
+  }
 
   // the old speaker switch is now just the octave dial
   $: speakerType = settings.octave > 0 ? 'tinny' : 'bass'
@@ -72,24 +94,58 @@
   }
 
   // choruses scheduled but not yet finished; their note lengths are worked
-  // out again whenever a feel dial moves, so changes are heard right away
+  // out again whenever a feel dial moves, so changes are heard right away,
+  // and their unplayed bars are rewritten when a generator dial moves
   const live = new Set()
   function rearticulate() {
     live.forEach(song => { song.articulated = articulate(song.beats, settings) })
+  }
+
+  function prepare(song) {
+    song.beats = song.flatten(song.notes)
+    song.articulated = articulate(song.beats, settings)
+  }
+
+  // Rewrite what hasn't played yet: the sounding chorus from the bar after
+  // next (the next beat may already be on its way to the speakers), then
+  // every chorus queued after it, each continuing from the one before.
+  // Before Play, the chorus on screen is simply written again.
+  function regenerateLive() {
+    if (!started) {
+      sw = writeChorus(null)
+      return
+    }
+    const slotTicks = Tone.Time(SLOT).toTicks()
+    const now = transport.ticks
+    const songs = [...live].filter(song => song.endTick > now).sort((a, b) => a.startTick - b.startTick)
+    songs.forEach((song, k) => {
+      if (k > 0) {
+        song.continueFrom(songs[k - 1])
+      } else {
+        const nextBeat = Math.floor((now - song.startTick) / slotTicks) + 1
+        song.regenerateFrom(nextBeat < 0 ? 0 : Math.floor(nextBeat / 4) + 1)
+      }
+      prepare(song)
+    })
+    sw = sw
   }
 
   // Schedule `song` to start at transport tick `start`. When it begins, the
   // next chorus is written and scheduled for the tick right after this one's
   // last slot, so the beat never stops between choruses.
   function scheduleChorus(song, start) {
-    song.beats = song.flatten(song.notes)
-    song.articulated = articulate(song.beats, settings)
+    prepare(song)
     live.add(song)
-    // the sequence carries positions; the event is looked up as it plays
-    const slots = song.beats.map((events, b) => events.map((e, i) => e && { b, i }))
+    // the sequence carries positions on the triplet grid; the event is
+    // looked up as it plays, so rewritten bars are heard
+    const slots = song.beats.map((_, b) => Array.from({ length: GRID }, (_, i) => ({ b, i })))
     const end = start + slots.length * Tone.Time(SLOT).toTicks()
+    song.startTick = start
+    song.endTick = end
     const sequence = new Tone.Sequence((time, { b, i }) => {
-      const event = song.articulated[b][i]
+      const events = song.articulated[b]
+      const event = events.length === GRID ? events[i] : (i === 0 ? events[0] : null)
+      if (!event) { return }
       rig.play(event, time, Tone.Time(SLOT).toSeconds())
       // update the score when the note sounds, not when it is scheduled
       draw.schedule(() => {

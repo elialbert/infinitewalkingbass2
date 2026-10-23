@@ -82,3 +82,44 @@ it('carries the line into the next chorus', () => {
   const firstBar = second.sections()[0].lines[0].bars[0]
   expect(firstBar.beats[0].note).toEqual(lastBar.nextBarFirstNote)
 })
+
+// every sounding event in order, as [note, beat number]
+function soundingEvents(sw) {
+  return sw.flatten(sw.notes).flat().filter(e => e).map(e => [e.note, e.beat])
+}
+
+it('regenerates from a bar on, keeping what came before', () => {
+  utils.seed(4)
+  const sw = new SongWriter(0, null, 'AABA')
+  sw.generate()
+  sw.notes = sw.gather()
+  const bars = sw.bars()
+  const from = 9
+  const before = sw.flatten(sw.notes).map(beat => beat.map(e => e && e.note))
+  const keptFirst = bars[from].beats[0].note
+  sw.regenerateFrom(from)
+  const after = sw.flatten(sw.notes).map(beat => beat.map(e => e && e.note))
+  utils.seed(null)
+  expect(after.length).toEqual(before.length)
+  expect(after.slice(0, from * 4)).toEqual(before.slice(0, from * 4))
+  expect(bars[from].beats[0].note).toEqual(keptFirst)
+  expect(after.slice(from * 4)).not.toEqual(before.slice(from * 4))
+  // beat numbers still run 0, 1, 2... in playing order
+  expect(soundingEvents(sw).map(([, beat]) => beat)).toEqual(soundingEvents(sw).map((_, i) => i))
+})
+
+it('rewrites the next chorus so it continues from a regenerated ending', () => {
+  utils.seed(6)
+  const first = new SongWriter(0, null, 'AABA')
+  first.generate()
+  first.notes = first.gather()
+  const second = new SongWriter(0, first)
+  second.generate()
+  second.notes = second.gather()
+  first.regenerateFrom(first.bars().length - 2)
+  second.continueFrom(first)
+  utils.seed(null)
+  const lastBar = first.bars().at(-1)
+  expect(second.bars()[0].beats[0].note).toEqual(lastBar.nextBarFirstNote)
+  expect(soundingEvents(second)[0][1]).toEqual(0)
+})

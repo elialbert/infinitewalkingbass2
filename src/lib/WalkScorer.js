@@ -6,6 +6,7 @@
 import { Chord, Interval, Note, Scale } from 'tonal'
 import utils from './utils.js'
 import musicUtils from './musicUtils.js'
+import { knobs } from './Knobs.js'
 
 const LOW = Note.midi(musicUtils.RANGE_LOW)
 const HIGH = Note.midi(musicUtils.RANGE_HIGH)
@@ -196,6 +197,9 @@ class WalkScorer {
 
     const [cell, whole] = this.matchCell(notes)
     if (cell) { s += W.cellStart + (whole ? W.cellWhole : 0) }
+    if (knobs.chromatic) {
+      s += knobs.chromatic * cand.filter((m, i) => !this.isInside(m, i + 1)).length
+    }
     return s
   }
 
@@ -205,7 +209,8 @@ class WalkScorer {
     if (cands.length === 0) { return null }
     const scores = cands.map(c => this.score(first, c, target, recentShapes))
     const top = Math.max(...scores)
-    const weights = scores.map(s => Math.exp((s - top) / WEIGHTS.temperature))
+    const temperature = WEIGHTS.temperature * knobs.adventure
+    const weights = scores.map(s => Math.exp((s - top) / temperature))
     const total = weights.reduce((a, b) => a + b, 0)
     let r = utils.random() * total
     let idx = 0

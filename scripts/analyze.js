@@ -5,11 +5,13 @@
 //   npm run analyze -- --json > before.json # machine-readable
 //   npm run analyze -- --midi out.mid       # also write a MIDI file to listen to
 //   npm run analyze -- --print 2            # print the first 2 choruses bar by bar
+//   npm run analyze -- --knobs skips=2,chromatic=1  # with generator dials moved
 import fs from 'fs'
 import midiPkg from '@tonejs/midi'
 import { Note } from 'tonal'
 import { analyze, generateSongs } from './metrics.js'
 import { articulate } from '../src/lib/Articulation.js'
+import { setKnobs } from '../src/lib/Knobs.js'
 
 const { Midi } = midiPkg
 
@@ -20,6 +22,10 @@ function arg(name, fallback) {
   return (v === undefined || v.startsWith('--')) ? true : v
 }
 
+const knobArg = arg('knobs', '')
+if (knobArg) {
+  setKnobs(Object.fromEntries(knobArg.split(',').map(kv => kv.split('=')).map(([k, v]) => [k, Number(v)])))
+}
 const songs = Number(arg('songs', 300))
 const seed = Number(arg('seed', 1))
 const songWriters = generateSongs(songs, seed)

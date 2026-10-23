@@ -78,6 +78,30 @@ class SongWriter {
     return this.sections().map(section => section.gather())
   }
 
+  bars() {
+    return this.sections().flatMap(section => section.lines.flatMap(line => line.bars))
+  }
+
+  // Write bar `from` onward again (after a generator dial moves) and rebuild
+  // `notes`. Earlier bars keep their notes and beat numbers, and bar
+  // `from` keeps its first note, which the bar before it led into.
+  regenerateFrom(from) {
+    const bars = this.bars()
+    if (from >= bars.length) { return }
+    this.beatCounter = from > 0 ? bars[from].firstBeatNumber : 0
+    bars.slice(from).forEach(bar => bar.regenerate())
+    let i = 0
+    this.notes = this.sections().map((section, s) => section.lines.map((line, l) => line.bars.map((bar, b) =>
+      i++ < from ? this.notes[s][l][b] : bar.gather())))
+  }
+
+  // write this whole chorus again so it carries on from `prev`'s new ending
+  continueFrom(prev) {
+    this.carryOver = prev.lastBarSummary()
+    this.bars()[0].lastBar = this.carryOver
+    this.regenerateFrom(0)
+  }
+
   // what the next chorus needs to continue the line
   lastBarSummary() {
     const lastSection = this.sectionList[this.sectionList.length - 1]

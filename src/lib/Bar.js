@@ -4,6 +4,7 @@ import NoteChooser from './NoteChooser.js'
 import TripletChooser from './TripletChooser.js'
 import musicUtils from './musicUtils.js'
 import utils from './utils.js'
+import { scaled } from './Knobs.js'
 
 // chance a bar of a dominant that carries on into the next bar is played
 // as a pedal on its root
@@ -95,7 +96,8 @@ class Bar {
     if (this.chord2 || this.nextChord !== this.chord) { return false }
     if (Chord.get(this.chord).type !== 'dominant seventh') { return false }
     if (Note.chroma(this.chosenFirstNote) !== Note.chroma(Chord.get(this.chord).tonic)) { return false }
-    return utils.chooseWithProbabilities(['yes', 'no'], [PEDAL_CHANCE, 100 - PEDAL_CHANCE]) === 'yes'
+    const chance = scaled(PEDAL_CHANCE, 'pedals')
+    return utils.chooseWithProbabilities(['yes', 'no'], [chance, 100 - chance]) === 'yes'
   }
 
   // root on 1, 2 and 3, then a half step into the next bar
@@ -133,7 +135,10 @@ class Bar {
       const below = Note.midi(goal) > Note.midi(from)
       return musicUtils.foldIntoRange(Note.transpose(goal, below ? '-2m' : '2m'))
     }
-    const chance = (pct) => utils.chooseWithProbabilities(['yes', 'no'], [pct, 100 - pct]) === 'yes'
+    const chance = (pct) => {
+      pct = scaled(pct, 'pickups')
+      return utils.chooseWithProbabilities(['yes', 'no'], [pct, 100 - pct]) === 'yes'
+    }
     if (chance(PICKUP_CHANCE.beat2)) { this.beats[1].pickup = this.spell(pickupInto(beat3, first), 2) }
     if (chance(PICKUP_CHANCE.beat4)) { this.beats[3].pickup = this.spell(pickupInto(target, beat3), 3) }
   }
@@ -148,7 +153,17 @@ class Bar {
     })
   }
 
+  // fresh beats and note choices, keeping the chords, direction and links
+  regenerate() {
+    this.beats = []
+    this.pedal = false
+    this.shape = this.cell = this.nextBarFirstNote = undefined
+    this.generate()
+  }
+
   gather() {
+    // where this bar's beat numbers start, so it can be regenerated in place
+    this.firstBeatNumber = this.line.section.song.beatCounter
     this.chooseNotes()
     return this.beats.map(function(beat) {
       return beat.gather()

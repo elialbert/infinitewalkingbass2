@@ -17,12 +17,12 @@ export const DEFAULT_SETTINGS = {
   ghost: 1,            // level of skips, pickups and triplet approaches
   // tone
   brightness: 320,     // Hz the pluck filter settles to
-  pluck: 1.8,          // octaves the filter opens on each attack
-  honk: 0.3,           // filter resonance; high values get nasal and froggy
+  pluck: 1.2,          // octaves the filter opens on each attack
+  honk: 0.1,           // filter resonance; high values get nasal and froggy
   ring: 0.9,           // seconds a plucked note takes to decay
   bite: 6,             // cents the string starts sharp
   fingerNoise: 0.2,
-  low: 2, mid: 0, high: -3,
+  low: 6, mid: 0, high: -3,
   // room and master
   room: 0.18,
   roomSize: 1.2,
