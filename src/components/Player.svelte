@@ -7,9 +7,7 @@
   // Each Sequence slot is one walking beat, so Transport swing would push
   // beats 2 and 4 late. Swung skip notes and triplets are written into the
   // beat subdivisions instead.
-  Tone.Transport.swing = 0
-
-  let loopCount = -1
+  Tone.getTransport().swing = 0
 
   var bass = new Tone.MonoSynth({
     volume: 5,
@@ -57,10 +55,17 @@
   })
   bass.chain(reverb, compressor, tremelo, Tone.Destination)
 
-  let sw, notesToPlay, loop, totalBeatCount
-  let nextSw, nextNotesToPlay, nextLoop, nextTotalBeatCount
+  // Each walking beat is one Sequence slot. Slots are '8n' long, so the
+  // quarter-note tempo shown in the UI is twice the Transport bpm.
+  const SLOT = '8n'
+  const transport = Tone.getTransport()
+  const draw = Tone.getDraw()
 
-  let playing = false;
+  let tempo = 134
+  $: transport.bpm.value = tempo / 2
+
+  let playing = false
+  let started = false
   let buttonText = 'Play'
   let speakerType = 'bass'
 
@@ -89,106 +94,54 @@
     return note
   }
 
-  Tone.Transport.bpm.value = 67;
+  // the chorus on screen, and the score beat sounding now
+  let sw = writeChorus(null)
+  let currentBeatNumber = -1
 
+  function writeChorus(prev) {
+    const song = new SongWriter(0, prev)
+    song.generate()
+    song.notes = song.gather()
+    return song
+  }
 
-  let currentBeatNumber = -1;
+  // Schedule `song` to start at transport tick `start`. When it begins, the
+  // next chorus is written and scheduled for the tick right after this one's
+  // last slot, so the beat never stops between choruses.
+  function scheduleChorus(song, start) {
+    const slots = song.flatten(song.notes)
+    const end = start + slots.length * Tone.Time(SLOT).toTicks()
+    const sequence = new Tone.Sequence((time, event) => {
+      bass.triggerAttackRelease(playbackNote(event.note), event.duration, time, event.velocity)
+      // update the score when the note sounds, not when it is scheduled
+      draw.schedule(() => {
+        sw = song
+        currentBeatNumber = event.beat
+      }, time)
+    }, slots, SLOT)
+    sequence.loop = false
+    sequence.start(`${start}i`)
+    transport.scheduleOnce(() => scheduleChorus(writeChorus(song), end), `${start}i`)
+    transport.scheduleOnce(() => sequence.dispose(), `${end + Tone.Time(SLOT).toTicks()}i`)
+  }
 
-  const bell = new Tone.MetalSynth({
-    volume: -100
-  }).toDestination();
-
-  function togglePlay() {
+  async function togglePlay() {
     if (playing) {
-      // console.log('stopping');
-      playing = false;
-      buttonText = "Play";
-      bass.triggerRelease();
-      loop.stop()
-    } else {
-      // console.log('starting');
-      playing = true;
-      buttonText = 'Pause'
-
-      if (Tone.context.state !== 'running') {
-        Tone.context.resume();
-      }
-      loop.start(Tone.Transport.seconds);
-      Tone.Transport.start();
-
-
+      playing = false
+      buttonText = 'Play'
+      transport.pause()
+      bass.triggerRelease()
+      return
     }
-  }
-
-  function makeLoop(notesToPlay) {
-    return new Tone.Sequence({
-      callback: (time, event) => {
-        currentBeatNumber += 1
-        if (typeof event === 'object' && event !== null) {
-          bass.triggerAttackRelease(playbackNote(event.note), event.duration, time, event.velocity)
-        } else {
-          bass.triggerAttackRelease(playbackNote(event), '8n', time)
-        }
-
-        if (currentBeatNumber == (totalBeatCount - 1)) {
-          loop.stop()
-          return restart(time)
-        }
-      },
-      events: notesToPlay,
-      subdivision: "8n",
-      loop: false,
-      loopEnd: 1,
-      humanize: 0.003
-    });
-  }
-
-  function prepareNext() {
-    let nextLoopCount = loopCount + 1
-    nextSw = new SongWriter(nextLoopCount)
-    nextSw.generate()
-    nextSw.notes = nextSw.gather()
-    nextNotesToPlay = nextSw.flatten(nextSw.notes)
-    nextTotalBeatCount = nextNotesToPlay.flat().filter(function (el) {
-      return el != null;
-    }).length
-    nextLoop = makeLoop(nextNotesToPlay)
-  }
-
-  function restart(time) {
-    currentBeatNumber = -1
-    loopCount += 1
-
-    if (nextLoop) {
-      sw = nextSw
-      notesToPlay = nextNotesToPlay
-      totalBeatCount = nextTotalBeatCount
-      loop = nextLoop
-      nextSw = null
-      nextNotesToPlay = null
-      nextLoop = null
-      nextTotalBeatCount = null
-    } else {
-      sw = new SongWriter(loopCount)
-      sw.generate()
-      sw.notes = sw.gather()
-      notesToPlay = sw.flatten(sw.notes)
-      totalBeatCount = notesToPlay.flat().filter(function (el) {
-        return el != null;
-      }).length
-      loop = makeLoop(notesToPlay)
+    await Tone.start()
+    if (!started) {
+      started = true
+      scheduleChorus(sw, 0)
     }
-
-    if (time) {
-      const eighthNote = Tone.Time('8n').toSeconds()
-      const lookahead = time - Tone.context.currentTime
-      Tone.Transport.seconds = 0
-      loop.start(lookahead + eighthNote)
-    }
-
-    prepareNext()
+    playing = true
+    buttonText = 'Pause'
+    transport.start()
   }
-  restart()
 </script>
 
 <div class="controls">
@@ -204,6 +157,10 @@
       Tinny
     </label>
   </fieldset>
+  <label class="tempo">
+    <span>Tempo {tempo}</span>
+    <input type="range" min="80" max="260" step="2" bind:value={tempo}>
+  </label>
 </div>
 {#if sw}
   <Score songWriter={sw} {currentBeatNumber}></Score>
@@ -244,6 +201,17 @@
   .speaker-type legend {
     font-size: 0.85em;
     padding: 0 0.25rem;
+  }
+  .tempo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9em;
+    margin: 0;
+  }
+  .tempo span {
+    min-width: 5.5em;
+    text-align: left;
   }
   .speaker-type label {
     display: inline;
