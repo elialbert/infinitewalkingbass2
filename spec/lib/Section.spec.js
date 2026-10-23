@@ -1,5 +1,8 @@
+import utils from 'src/lib/utils.js'
 import SongWriter from 'src/lib/SongWriter.js';
 import Section from 'src/lib/Section.js';
+
+afterEach(() => utils.setRandom(null))
 
 it('generates lines for part B', () => {
   let sw = new SongWriter()
@@ -42,9 +45,7 @@ it('returns a direction hint', () => {
 })
 
 it('defaults direction to down when no current direction', () => {
-  const mockMath = Object.create(global.Math);
-  mockMath.random = () => 0.99; // probability -> 'stay'
-  global.Math = mockMath;
+  utils.setRandom(() => 0.99) // probability -> 'stay'
   let sw = new SongWriter()
   const s = new Section(sw, 'a', 0)
   expect(s.getDirectionHint(null)).toEqual('down')

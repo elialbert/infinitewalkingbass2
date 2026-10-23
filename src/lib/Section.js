@@ -1,5 +1,5 @@
 import Line from './Line.js'
-import utils from './utils'
+import utils from './utils.js'
 
 class Section {
   constructor(song, part, sectionIdx) {

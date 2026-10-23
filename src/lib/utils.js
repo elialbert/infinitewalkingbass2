@@ -1,7 +1,33 @@
+// All randomness in the generator goes through `random()` so that it can be
+// seeded (for reproducible analysis) or stubbed (in tests).
+let random = Math.random
+
+// mulberry32: tiny, fast, good-enough seeded PRNG
+function seededRandom(seed) {
+  let a = seed >>> 0
+  return function() {
+    a = (a + 0x6D2B79F5) >>> 0
+    let t = a
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+// seed the generator; pass null/undefined to go back to Math.random
+function seed(s) {
+  random = (s === null || s === undefined) ? Math.random : seededRandom(s)
+}
+
+// replace the random source with any () => [0, 1) function
+function setRandom(fn) {
+  random = fn || Math.random
+}
+
 // Returns a random integer between min (included) and max (included)
 // Using Math.round() will give you a non-uniform distribution!
 function getRandomIntInclusive(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(random() * (max - min + 1)) + min;
 }
 
 function randFromArray(arr) {
@@ -10,7 +36,7 @@ function randFromArray(arr) {
 
 function shuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
+        var j = Math.floor(random() * (i + 1));
         var temp = array[i];
         array[i] = array[j];
         array[j] = temp;
@@ -40,11 +66,10 @@ function chooseWithProbabilities(values, probabilities, randFunc) {
 
 // assumming an ordered list of values, take each one sequentially at a .5 chance
 function chooseWithProbabilityDecreasing(values) {
-  const len = values.length
   let chosen = null
-  values.forEach(function(value, chosenIdx) {
+  values.forEach(function(value) {
     if (!chosen) {
-      if (Math.random() > 0.5) {
+      if (random() > 0.5) {
         chosen = value
       }
     }
@@ -52,23 +77,24 @@ function chooseWithProbabilityDecreasing(values) {
   return chosen || values[values.length - 1]
 }
 
+// pick two distinct elements, returned in the order they appear in arr
+// (does not mutate arr)
 function chooseTwoRandomElementsInOrder(arr) {
-  let c1 = randFromArray(arr)
-  const ind = arr.indexOf(c1)
-  arr.splice(ind, 1)
-  let c2 = randFromArray(arr)
-  if (!c2) { c2 = c1 }
-  if (arr.indexOf(c1) <= arr.indexOf(c2)) {
-    return [c1, c2]
-  } else {
-    return [c2, c1]
-  }
+  if (arr.length < 2) { return [arr[0], arr[0]] }
+  const i1 = getRandomIntInclusive(0, arr.length - 1)
+  let i2 = getRandomIntInclusive(0, arr.length - 2)
+  if (i2 >= i1) { i2 += 1 }
+  return i1 < i2 ? [arr[i1], arr[i2]] : [arr[i2], arr[i1]]
 }
 
 const utils = {
+  seed: seed,
+  setRandom: setRandom,
+  random: () => random(),
   chooseWithProbabilities: chooseWithProbabilities,
   chooseWithProbabilityDecreasing: chooseWithProbabilityDecreasing,
   randFromArray: randFromArray,
+  shuffleArray: shuffleArray,
   chooseTwoRandomElementsInOrder: chooseTwoRandomElementsInOrder
 }
 export default utils

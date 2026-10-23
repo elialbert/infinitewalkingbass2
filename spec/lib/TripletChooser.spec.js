@@ -1,11 +1,12 @@
+import utils from 'src/lib/utils.js'
 import TripletChooser from 'src/lib/TripletChooser.js'
 import { Note } from 'tonal'
 
 let setRandom = function(val) {
-  const mockMath = Object.create(global.Math);
-  mockMath.random = () => val;
-  global.Math = mockMath;
+  utils.setRandom(() => val)
 }
+
+afterEach(() => utils.setRandom(null))
 
 function makeMockBar(direction, notes) {
   notes = notes || ['C3', 'D3', 'E3', 'F3']
@@ -67,4 +68,14 @@ it('skips beats with octaveBounce', () => {
   new TripletChooser(bar)
   // no valid candidate pair found, so no triplet set
   bar.beats.forEach(b => expect(b.triplet).toBe(false))
+})
+
+it('chromatic approach triplets use three different pitches', () => {
+  setRandom(0) // probability -> 'yes', pattern -> 'end'
+  ;['up', 'down'].forEach(direction => {
+    const bar = makeMockBar(direction, ['C3', 'D3', 'E3', 'F3'])
+    new TripletChooser(bar)
+    const midis = bar.beats[3].triplet.map(t => Note.midi(t.note))
+    expect(new Set(midis).size).toEqual(3)
+  })
 })

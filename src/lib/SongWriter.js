@@ -3,7 +3,7 @@ import musicUtils from './musicUtils.js'
 
 class SongWriter {
   constructor(songIdx) {
-    this.keys = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'C#', 'G#', 'Eb', 'Bb', 'F']
+    this.keys = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Db', 'Ab', 'Eb', 'Bb', 'F']
     this.key = this.keys[songIdx % this.keys.length]
     this.chordProgA = musicUtils.chooseProgression(this.key)
     this.chordProgB = musicUtils.chooseProgression(this.key)

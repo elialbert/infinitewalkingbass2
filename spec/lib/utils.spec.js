@@ -1,10 +1,10 @@
 import utils from 'src/lib/utils.js'
 
 let setRandom = function(val) {
-  const mockMath = Object.create(global.Math);
-  mockMath.random = () => val;
-  global.Math = mockMath;
+  utils.setRandom(() => val)
 }
+
+afterEach(() => utils.setRandom(null))
 
 it('gets random element from array', () => {
   setRandom(0)
@@ -86,4 +86,26 @@ it('chooses by probability distribution', () => {
   randFunc = function(_, _2) { return 91 }
   result = utils.chooseWithProbabilities([1, 2, 3, 4, 5], [10, 20, 30, 30, 10], randFunc)
   expect(result).toEqual(5)
+})
+it('returns the two chosen elements in array order', () => {
+  // first pick index 3, second pick index 0 -> must come back as [a, d]
+  const values = [0.99, 0]
+  utils.setRandom(() => values.shift())
+  expect(utils.chooseTwoRandomElementsInOrder(['a', 'b', 'c', 'd'])).toEqual(['a', 'd'])
+})
+
+it('does not mutate the array in chooseTwoRandomElementsInOrder', () => {
+  const arr = ['a', 'b', 'c']
+  utils.chooseTwoRandomElementsInOrder(arr)
+  expect(arr).toEqual(['a', 'b', 'c'])
+})
+
+it('seeds the random source reproducibly', () => {
+  utils.seed(123)
+  const a = [utils.random(), utils.random(), utils.random()]
+  utils.seed(123)
+  const b = [utils.random(), utils.random(), utils.random()]
+  utils.seed(null)
+  expect(a).toEqual(b)
+  a.forEach(v => { expect(v).toBeGreaterThanOrEqual(0); expect(v).toBeLessThan(1) })
 })

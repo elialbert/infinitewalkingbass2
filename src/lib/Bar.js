@@ -2,6 +2,7 @@ import Beat from './Beat.js'
 import { Chord } from 'tonal'
 import NoteChooser from './NoteChooser.js'
 import TripletChooser from './TripletChooser.js'
+import musicUtils from './musicUtils.js'
 
 class Bar {
   constructor(line, chord, barIdx) {
@@ -10,7 +11,8 @@ class Bar {
     this.barIdx = barIdx // spot in line
     this.key = this.line.section.song.key
     this.beats = []
-    this.notes = Chord.get(this.chord).notes
+    // respell chord tones so a Dbo7 is Db E G Bb rather than Db Fb Abb Cbb
+    this.notes = Chord.get(this.chord).notes.map(n => musicUtils.spell(n, this.key))
     if (!this.notes[3]) {
       this.notes[3] = this.notes[0]
     }
@@ -57,10 +59,11 @@ class Bar {
     this.chosenLastNote = this.lastNote()
     this.chosenNotesBetween = this.notesBetween()
     // console.log('choosing notes', this.chosenFirstNote, this.chosenLastNote, this.chosenNotesBetween)
-    this.beats[0].chooseNote(this.chosenFirstNote)
-    this.beats[3].chooseNote(this.chosenLastNote)
-    this.beats[1].chooseNote(this.chosenNotesBetween[0])
-    this.beats[2].chooseNote(this.chosenNotesBetween[1])
+    const spell = (n) => musicUtils.spell(n, this.key, this.chord)
+    this.beats[0].chooseNote(spell(this.chosenFirstNote))
+    this.beats[3].chooseNote(spell(this.chosenLastNote))
+    this.beats[1].chooseNote(spell(this.chosenNotesBetween[0]))
+    this.beats[2].chooseNote(spell(this.chosenNotesBetween[1]))
     this.tripletChooser = new TripletChooser(this)
   }
 

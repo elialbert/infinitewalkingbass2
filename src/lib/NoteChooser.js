@@ -1,12 +1,17 @@
-import { Chord, Note, Scale } from 'tonal'
+import { Chord, Interval, Note, Scale } from 'tonal'
 import utils from './utils.js'
 import musicUtils from './musicUtils.js'
+
+// bar-start notes below/above these turn the line around
+const TURN_UP_BELOW = Note.midi('A1')
+const TURN_DOWN_ABOVE = Note.midi('Bb2')
 
 class NoteChooser {
   constructor(chord, nextChord, lastBarNextBarFirstNote, notes, key,
     direction,
     nextBarFirstNoteCallback) {
     this.chord = chord
+    this.root = musicUtils.chordRoot(this.chord)
     this.chosenScale = musicUtils.chooseScale(this.chord)
     this.nextChord = nextChord
     this.lastBarNextBarFirstNote = lastBarNextBarFirstNote
@@ -17,36 +22,54 @@ class NoteChooser {
     this.nextBarFirstNoteCallback = nextBarFirstNoteCallback
   }
 
+  // ascending scale notes of the current chord between two notes (inclusive)
+  scaleRange(from, to) {
+    return Scale.rangeOf(`${this.root} ${this.chosenScale}`)(from, to)
+  }
+
   firstNote() {
     this.chosenFirstNote = this.lastBarNextBarFirstNote || musicUtils.appendOctaveInteger(this.notes[0], this.octave)
     return this.chosenFirstNote
+  }
+
+  // put pitch class `pc` just above (up) or just below (down) `from`;
+  // if that leaves the bass range, turn the line around instead
+  placeInDirection(pc, from, allowSame) {
+    const place = (direction) => {
+      let note = musicUtils.appendOctaveInteger(Note.pitchClass(pc), musicUtils.noteOctave(from))
+      const dist = musicUtils.semiDistance(from, note)
+      if (direction == 'up' && (dist < 0 || (dist == 0 && !allowSame))) {
+        note = Note.transpose(note, '8P')
+      }
+      if (direction == 'down' && (dist > 0 || (dist == 0 && !allowSame))) {
+        note = Note.transpose(note, '-8P')
+      }
+      return note
+    }
+    let note = place(this.direction)
+    if (!musicUtils.inRange(note)) {
+      this.direction = this.direction == 'up' ? 'down' : 'up'
+      note = place(this.direction)
+    }
+    return musicUtils.foldIntoRange(note)
   }
 
   runNextBarFirstNote() {
     const newNotes = Chord.get(this.nextChord).notes
     let nextBarFirstNote
 
-    if ((musicUtils.noteOctave(this.chosenFirstNote) <= 2)) {
+    const firstMidi = Note.midi(this.chosenFirstNote)
+    if (firstMidi <= TURN_UP_BELOW) {
       this.direction = 'up'
     }
-    if (musicUtils.noteOctave(this.chosenFirstNote) >= 4) {
+    if (firstMidi >= TURN_DOWN_ABOVE) {
       this.direction = 'down'
     }
 
     if (this.chord !== this.nextChord) {
       const options = [newNotes[0], newNotes[1], newNotes[2]]
-      nextBarFirstNote = musicUtils.appendOctaveInteger(
-        utils.chooseWithProbabilities(options, [80, 10, 10]), this.octave)
-
-      if ((musicUtils.semiDistance(this.chosenFirstNote, nextBarFirstNote) < 0) && this.direction == 'up') {
-        nextBarFirstNote = Note.transpose(nextBarFirstNote, '8M')
-      }
-
-      if ((musicUtils.semiDistance(this.chosenFirstNote, nextBarFirstNote) > 0) && this.direction == 'down') {
-        nextBarFirstNote = Note.transpose(nextBarFirstNote, '-8M')
-      }
-      // console.log('nnextfirst', this.octave, this.direction, nextBarFirstNote)
-
+      const pc = utils.chooseWithProbabilities(options, [80, 10, 10])
+      nextBarFirstNote = this.placeInDirection(pc, this.chosenFirstNote, true)
     } else {
       // Same chord continues — prefer chord tones to stay grounded
       const sameChordChoice = utils.chooseWithProbabilities(
@@ -54,29 +77,16 @@ class NoteChooser {
 
       if (sameChordChoice !== 'scale') {
         let noteIndex = sameChordChoice === 'root' ? 0 : sameChordChoice === 'fifth' ? 2 : 1
-        nextBarFirstNote = musicUtils.appendOctaveInteger(newNotes[noteIndex], this.octave)
-
-        if ((musicUtils.semiDistance(this.chosenFirstNote, nextBarFirstNote) <= 0) && this.direction == 'up') {
-          nextBarFirstNote = Note.transpose(nextBarFirstNote, '8M')
-        }
-        if ((musicUtils.semiDistance(this.chosenFirstNote, nextBarFirstNote) >= 0) && this.direction == 'down') {
-          nextBarFirstNote = Note.transpose(nextBarFirstNote, '-8M')
-        }
+        nextBarFirstNote = this.placeInDirection(newNotes[noteIndex], this.chosenFirstNote, false)
       } else {
-        const rangeFinder = Scale.rangeOf(`${this.key} ${this.chosenScale}`)
         let noteRange
         if (this.direction == 'up') {
-          let minJump = Note.transpose(this.chosenFirstNote, '2m')
-          let maxJump = Note.transpose(this.chosenFirstNote, '8M')
-          noteRange = rangeFinder(minJump, maxJump)
+          noteRange = this.scaleRange(Note.transpose(this.chosenFirstNote, '2m'), Note.transpose(this.chosenFirstNote, '8P'))
         } else {
-          let minJump = Note.transpose(this.chosenFirstNote, '-2m')
-          let maxJump = Note.transpose(this.chosenFirstNote, '-8M')
-          noteRange = rangeFinder(minJump, maxJump)
+          noteRange = this.scaleRange(Note.transpose(this.chosenFirstNote, '-2m'), Note.transpose(this.chosenFirstNote, '-8P'))
         }
-        nextBarFirstNote = utils.chooseWithProbabilityDecreasing(noteRange)
+        nextBarFirstNote = musicUtils.foldIntoRange(utils.chooseWithProbabilityDecreasing(noteRange))
       }
-      // console.log('nextfirst', this.octave, this.direction, nextBarFirstNote, noteRange, this.chosenScale)
     }
 
     this.nextBarFirstNoteCallback(nextBarFirstNote)
@@ -89,8 +99,8 @@ class NoteChooser {
     this.noteAbove = Note.transpose(nextBarFirstNote, '2m')
     this.noteStepDown = Note.transpose(nextBarFirstNote, '-2M')
     this.noteStepUp = Note.transpose(nextBarFirstNote, '2M')
-    this.noteDominantBelow = Note.transpose(nextBarFirstNote, '-4M')
-    this.noteDominantAbove = Note.transpose(nextBarFirstNote, '5M')
+    this.noteDominantBelow = Note.transpose(nextBarFirstNote, '-4P')
+    this.noteDominantAbove = Note.transpose(nextBarFirstNote, '5P')
   }
 
   lastNoteNewChord(nextBarFirstNote) {
@@ -120,59 +130,67 @@ class NoteChooser {
       chosen = this.lastNoteNewChord(nextBarFirstNote)
     }
     if (!chosen) {
+      // chord tones are voiced near the next target so beat 4 still leads into it
       chosen = utils.chooseWithProbabilities(
         [this.noteBelow, this.noteAbove, this.noteDominantBelow, this.noteDominantAbove,
           this.noteStepDown, this.noteStepUp, this.noteBelow,
-          musicUtils.appendOctaveInteger(this.notes[3], this.octave),
-          musicUtils.appendOctaveInteger(this.notes[2], this.octave),
-          musicUtils.appendOctaveInteger(this.notes[1], this.octave)],
+          musicUtils.nearest(this.notes[3], nextBarFirstNote),
+          musicUtils.nearest(this.notes[2], nextBarFirstNote),
+          musicUtils.nearest(this.notes[1], nextBarFirstNote)],
         [10, 10, 10, 10, 10, 10, 10, 10, 10, 10])
     }
     this.chosenLastNote = musicUtils.appendOctaveInteger(chosen, this.octave)
+    if (!musicUtils.inRange(this.chosenLastNote)) {
+      // approach from the other side instead (e.g. half step below rather than above)
+      const fromTarget = musicUtils.semiDistance(nextBarFirstNote, this.chosenLastNote)
+      const mirrored = Note.transpose(this.chosenLastNote, Interval.fromSemitones(-2 * fromTarget))
+      this.chosenLastNote = musicUtils.foldIntoRange(mirrored)
+    }
     return this.chosenLastNote
   }
 
   // given 2 notes and a chord, pick 2 notes in between
   notesBetween() {
-    let rangeFinder = Scale.rangeOf(`${this.key} ${this.chosenScale}`)
-    let chosenLastNoteToUse = this.chosenLastNote
-    if (musicUtils.semiDistance(this.chosenFirstNote, chosenLastNoteToUse) == 0) {
-      chosenLastNoteToUse = Note.transpose(this.chosenLastNote, '5M')
-    }
-    if (musicUtils.semiDistance(this.chosenFirstNote, chosenLastNoteToUse) < 2) {
-      chosenLastNoteToUse = Note.transpose(this.chosenLastNote, '-4M')
-    }
-    if (musicUtils.semiDistance(this.chosenFirstNote, chosenLastNoteToUse) <= 3) {
-      rangeFinder = Scale.rangeOf(`${this.key} chromatic`)
-    }
-    let noteRange = rangeFinder(this.chosenFirstNote, chosenLastNoteToUse)
-    if (noteRange.length > 1) {
-      noteRange = noteRange.slice(1, noteRange.length)
-    }
-    if (noteRange.length > 1) {
-      const ind = noteRange.indexOf(this.chosenLastNote)
-      if (ind > -1) { noteRange.splice(ind, 1) }
+    const first = this.chosenFirstNote
+    const last = this.chosenLastNote
+    const firstMidi = Note.midi(first)
+    const lastMidi = Note.midi(last)
+
+    // When beat 4 sits right next to beat 1 there's no room to walk between
+    // them, so head away (in the bar's direction) and turn around on beat 4.
+    let goal = last
+    if (Math.abs(lastMidi - firstMidi) <= 3) {
+      goal = Note.transpose(first, this.direction == 'up' ? '5P' : '-4P')
+      if (!musicUtils.inRange(goal)) {
+        goal = Note.transpose(first, this.direction == 'up' ? '-4P' : '5P')
+      }
     }
 
-    if (this.direction == 'down') {
-      noteRange = noteRange.reverse()
+    // scaleRange is ascending; flip it when the line goes down so the
+    // candidates are in the order they'd be played
+    const descending = Note.midi(goal) < firstMidi
+    let noteRange = descending ? this.scaleRange(goal, first).reverse() : this.scaleRange(first, goal)
+    noteRange = noteRange.filter(n => Note.midi(n) !== firstMidi && Note.midi(n) !== lastMidi)
+
+    if (noteRange.length < 2) {
+      // too tight for the scale: fill in chromatically
+      const step = descending ? '-2m' : '2m'
+      const a = Note.transpose(first, step)
+      noteRange = [a, Note.transpose(a, step)]
     }
 
-    if (noteRange.length == 0) { noteRange = rangeFinder(this.chosenFirstNote, this.nextBarFirstNote) }
+    const r = utils.chooseTwoRandomElementsInOrder(noteRange)
 
-    // Identify chord tones in range before chooseTwoRandomElementsInOrder mutates it
-    const chordTonesInRange = noteRange.filter(n => musicUtils.noteInList(this.notes, n))
-
-    let r = utils.chooseTwoRandomElementsInOrder(noteRange)
-
-    // Beat 3 (r[1]) is a strong beat — prefer chord tones 60% of the time
-    if (chordTonesInRange.length > 0 &&
+    // Beat 3 (r[1]) is a strong beat — prefer chord tones 60% of the time,
+    // keeping the line moving in the same direction as beat 2
+    const afterBeat2 = noteRange.slice(noteRange.indexOf(r[0]) + 1)
+    const chordTones = afterBeat2.filter(n => musicUtils.noteInList(this.notes, n))
+    if (chordTones.length > 0 &&
         utils.chooseWithProbabilities(['yes', 'no'], [60, 40]) === 'yes') {
-      r[1] = utils.randFromArray(chordTonesInRange)
+      r[1] = utils.randFromArray(chordTones)
     }
 
-    // console.log('picking notes from ', this.chosenFirstNote, chosenLastNoteToUse ,this.chosenScale, noteRange, r)
-    return r
+    return r.map(n => musicUtils.foldIntoRange(n))
   }
 }
 

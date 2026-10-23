@@ -32,10 +32,10 @@ class TripletChooser {
       if (distance <= 3) {
         if (this.bar.direction == 'up') {
           if (pattern === 'end') {
-            // Chromatic approach from below
+            // Chromatic approach from below (whole step, half step, target)
             beat1.triplet = [
+              Note.transpose(beat1.note, '-2M'),
               Note.transpose(beat1.note, '-2m'),
-              Note.transpose(beat1.note, '-1A'),
               beat1.note
             ]
           } else if (pattern === 'start') {
@@ -55,10 +55,10 @@ class TripletChooser {
           }
         } else {
           if (pattern === 'end') {
-            // Chromatic approach from above
+            // Chromatic approach from above (whole step, half step, target)
             beat1.triplet = [
+              Note.transpose(beat1.note, '2M'),
               Note.transpose(beat1.note, '2m'),
-              Note.transpose(beat1.note, '1A'),
               beat1.note
             ]
           } else if (pattern === 'start') {
@@ -131,7 +131,7 @@ class TripletChooser {
         'middle': [ghost, target, ghost]
       }
       beat1.triplet = beat1.triplet.map((note, i) => ({
-        note, ...annotations[pattern][i]
+        note: musicUtils.spell(note, this.bar.key, this.bar.chord), ...annotations[pattern][i]
       }))
     }
 

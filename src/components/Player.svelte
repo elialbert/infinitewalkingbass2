@@ -4,7 +4,10 @@
   import Score from './Score.svelte'
   window.Tone = Tone
 
-  Tone.Transport.swing = 0.04
+  // Each Sequence slot is one walking beat, so Transport swing would push
+  // beats 2 and 4 late. Swung skip notes and triplets are written into the
+  // beat subdivisions instead.
+  Tone.Transport.swing = 0
 
   let loopCount = -1
 
@@ -77,6 +80,15 @@
     }
   }
 
+  // lines are generated at real upright-bass pitch; small speakers can't
+  // reproduce that, so the tinny setting plays everything an octave up
+  function playbackNote(note) {
+    if (speakerType === 'tinny') {
+      return Tone.Frequency(note).transpose(12).toNote()
+    }
+    return note
+  }
+
   Tone.Transport.bpm.value = 67;
 
 
@@ -113,9 +125,9 @@
       callback: (time, event) => {
         currentBeatNumber += 1
         if (typeof event === 'object' && event !== null) {
-          bass.triggerAttackRelease(event.note, event.duration, time, event.velocity)
+          bass.triggerAttackRelease(playbackNote(event.note), event.duration, time, event.velocity)
         } else {
-          bass.triggerAttackRelease(event, '8n', time)
+          bass.triggerAttackRelease(playbackNote(event), '8n', time)
         }
 
         if (currentBeatNumber == (totalBeatCount - 1)) {
