@@ -57,7 +57,8 @@ export function analyze(songWriters) {
     approaches: 0, approachHalf: 0, approachWhole: 0, approachFourthFifth: 0, approachLeap: 0,
     middle: 0, outside: 0, outsideUnresolved: 0,
     intervals: 0, repeats: 0, bigLeaps: 0,
-    skips: 0, tripletBars: 0, intervalHistogram: {}, midis: []
+    skips: 0, tripletBars: 0, oneDirection: 0, stepwiseRuns: 0, shapes: {},
+    intervalHistogram: {}, midis: []
   }
 
   songWriters.forEach(sw => {
@@ -89,6 +90,15 @@ export function analyze(songWriters) {
       }
       if (chordChromas.includes(Note.chroma(notes[2]))) { c.b3ChordTone++ }
       if ((midis[1] - midis[0]) * (midis[2] - midis[1]) < 0) { c.contourReversal++ }
+
+      // the bar's shape: one direction all the way is what makes a line sound
+      // like scale runs; a stepwise run is the plainest case of that
+      const steps = [midis[1] - midis[0], midis[2] - midis[1], midis[3] - midis[2]]
+      if (steps.every(d => d > 0) || steps.every(d => d < 0)) {
+        c.oneDirection++
+        if (steps.every(d => Math.abs(d) <= 2)) { c.stepwiseRuns++ }
+      }
+      bump(c.shapes, steps.join(','))
 
       // beats 2 and 3: outside the harmony, and whether they resolve by half step
       ;[1, 2].forEach(k => {
@@ -123,6 +133,7 @@ export function analyze(songWriters) {
   const sorted = c.midis.slice().sort((a, b) => a - b)
   const at = (p) => sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * p))]
   const r = (a, b) => b ? a / b : 0
+  const shapeCounts = Object.values(c.shapes)
 
   return {
     bars: c.bars,
@@ -139,6 +150,10 @@ export function analyze(songWriters) {
     beat1RootOnChange: r(c.b1Root, c.changeBars),
     beat3ChordTone: r(c.b3ChordTone, c.bars),
     contourReversal: r(c.contourReversal, c.bars),
+    oneDirectionBars: r(c.oneDirection, c.bars),
+    stepwiseRuns: r(c.stepwiseRuns, c.bars),
+    topShapeShare: r(Math.max(...shapeCounts), c.bars),
+    distinctShapes: shapeCounts.length,
     approachHalfStep: r(c.approachHalf, c.approaches),
     approachWholeStep: r(c.approachWhole, c.approaches),
     approachFourthFifth: r(c.approachFourthFifth, c.approaches),
