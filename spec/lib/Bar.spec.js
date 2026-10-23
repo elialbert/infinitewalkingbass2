@@ -52,13 +52,13 @@ it('determines current chord', () => {
   let bar1 = sw.sectionA.lines[0].bars[0]
   bar1.chooseNotes()
   expect(bar1.firstNote()).toEqual('D2')
-  expect(bar1.lastNote()).not.toBe(null)
+  expect(bar1.beats[3].note).not.toBe(undefined)
 
   let bar2 = sw.sectionA.lines[0].bars[1]
   bar2.chooseNotes()
   expect(bar1.nextBarFirstNote).not.toBe(undefined)
   expect(bar2.firstNote()).toEqual(bar1.nextBarFirstNote)
-  expect(bar2.lastNote()).not.toBe(undefined)
+  expect(bar2.beats[3].note).not.toBe(undefined)
 })
 
 it('determines notes', () => {

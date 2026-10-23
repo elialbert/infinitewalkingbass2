@@ -77,16 +77,6 @@ function chooseWithProbabilityDecreasing(values) {
   return chosen || values[values.length - 1]
 }
 
-// pick two distinct elements, returned in the order they appear in arr
-// (does not mutate arr)
-function chooseTwoRandomElementsInOrder(arr) {
-  if (arr.length < 2) { return [arr[0], arr[0]] }
-  const i1 = getRandomIntInclusive(0, arr.length - 1)
-  let i2 = getRandomIntInclusive(0, arr.length - 2)
-  if (i2 >= i1) { i2 += 1 }
-  return i1 < i2 ? [arr[i1], arr[i2]] : [arr[i2], arr[i1]]
-}
-
 const utils = {
   seed: seed,
   setRandom: setRandom,
@@ -94,7 +84,6 @@ const utils = {
   chooseWithProbabilities: chooseWithProbabilities,
   chooseWithProbabilityDecreasing: chooseWithProbabilityDecreasing,
   randFromArray: randFromArray,
-  shuffleArray: shuffleArray,
-  chooseTwoRandomElementsInOrder: chooseTwoRandomElementsInOrder
+  shuffleArray: shuffleArray
 }
 export default utils

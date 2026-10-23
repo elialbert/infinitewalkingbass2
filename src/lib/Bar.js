@@ -26,14 +26,6 @@ class Bar {
     return this.noteChooser.firstNote()
   }
 
-  lastNote() {
-    return this.noteChooser.lastNote()
-  }
-
-  notesBetween() {
-    return this.noteChooser.notesBetween()
-  }
-
   prepNextBar() {
     this.nextBar = this.line.nextBar(this.barIdx)
     if (this.nextBar) {

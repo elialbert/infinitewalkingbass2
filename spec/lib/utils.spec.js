@@ -27,18 +27,6 @@ it('chooses with decreasing probability - falls through to last when random <= 0
   expect(utils.chooseWithProbabilityDecreasing(['a', 'b', 'c'])).toEqual('c')
 })
 
-it('chooses two random elements in order', () => {
-  setRandom(0)
-  let result = utils.chooseTwoRandomElementsInOrder(['a', 'b', 'c', 'd'])
-  expect(result.length).toEqual(2)
-})
-
-it('handles single element array in chooseTwoRandomElementsInOrder', () => {
-  setRandom(0)
-  let result = utils.chooseTwoRandomElementsInOrder(['x'])
-  expect(result).toEqual(['x', 'x'])
-})
-
 it('chooses by probability distribution', () => {
   let randFunc = function(_, _2) { return 1 }
   let result = utils.chooseWithProbabilities([1, 2], [50, 50], randFunc)
@@ -87,19 +75,6 @@ it('chooses by probability distribution', () => {
   result = utils.chooseWithProbabilities([1, 2, 3, 4, 5], [10, 20, 30, 30, 10], randFunc)
   expect(result).toEqual(5)
 })
-it('returns the two chosen elements in array order', () => {
-  // first pick index 3, second pick index 0 -> must come back as [a, d]
-  const values = [0.99, 0]
-  utils.setRandom(() => values.shift())
-  expect(utils.chooseTwoRandomElementsInOrder(['a', 'b', 'c', 'd'])).toEqual(['a', 'd'])
-})
-
-it('does not mutate the array in chooseTwoRandomElementsInOrder', () => {
-  const arr = ['a', 'b', 'c']
-  utils.chooseTwoRandomElementsInOrder(arr)
-  expect(arr).toEqual(['a', 'b', 'c'])
-})
-
 it('seeds the random source reproducibly', () => {
   utils.seed(123)
   const a = [utils.random(), utils.random(), utils.random()]
