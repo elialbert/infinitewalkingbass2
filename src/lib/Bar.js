@@ -1,5 +1,5 @@
 import Beat from './Beat.js'
-import { Chord } from 'tonal'
+import { Chord, Note } from 'tonal'
 import NoteChooser from './NoteChooser.js'
 import TripletChooser from './TripletChooser.js'
 import musicUtils from './musicUtils.js'
@@ -54,16 +54,16 @@ class Bar {
       this.direction,
       this.nextBarFirstNoteCallback
     )
-    // console.log('working with ', this.chord, this.notes)
+    // shapes of the last two bars, so this bar doesn't copy them
+    const recentShapes = [this.lastBar, this.lastBar && this.lastBar.lastBar]
+      .filter(b => b && b.shape).map(b => b.shape)
     this.chosenFirstNote = this.firstNote()
-    this.chosenLastNote = this.lastNote()
-    this.chosenNotesBetween = this.notesBetween()
-    // console.log('choosing notes', this.chosenFirstNote, this.chosenLastNote, this.chosenNotesBetween)
+    const [beat2, beat3, beat4] = this.noteChooser.chooseBeats(recentShapes)
+    this.cell = this.noteChooser.pick && this.noteChooser.pick.cell
     const spell = (n) => musicUtils.spell(n, this.key, this.chord)
-    this.beats[0].chooseNote(spell(this.chosenFirstNote))
-    this.beats[3].chooseNote(spell(this.chosenLastNote))
-    this.beats[1].chooseNote(spell(this.chosenNotesBetween[0]))
-    this.beats[2].chooseNote(spell(this.chosenNotesBetween[1]))
+    ;[this.chosenFirstNote, beat2, beat3, beat4].forEach((note, i) => this.beats[i].chooseNote(spell(note)))
+    const midis = this.beats.map(b => Note.midi(b.note))
+    this.shape = [midis[1] - midis[0], midis[2] - midis[1], midis[3] - midis[2]].join(',')
     this.tripletChooser = new TripletChooser(this)
   }
 

@@ -16,6 +16,7 @@ describe.each(results)('seed %i', (seed, stats) => {
     expect(stats.beat1ChordToneOnChange).toEqual(1)
     expect(stats.beat1RootOnChange).toBeGreaterThan(0.7)
     expect(stats.beat3ChordTone).toBeGreaterThan(0.55)
+    expect(stats.beat3ChordTone).toBeLessThan(0.85)
   })
 
   it('stays inside the harmony, resolving any outside notes', () => {
@@ -24,11 +25,17 @@ describe.each(results)('seed %i', (seed, stats) => {
   })
 
   it('walks smoothly, approaching each bar by step or 4th/5th', () => {
-    expect(stats.contourReversal).toBeLessThan(0.2)
+    expect(stats.contourReversal).toBeGreaterThan(0.08)
+    expect(stats.contourReversal).toBeLessThan(0.25)
     expect(stats.approachHalfStep + stats.approachWholeStep + stats.approachFourthFifth).toBeGreaterThan(0.8)
     expect(stats.approachLeap).toBeLessThan(0.04)
     expect(stats.leapsOverFifth).toBeLessThan(0.05)
     expect(stats.repeatedNotes).toBeLessThan(0.04)
+  })
+
+  it('varies the bar shape instead of running scales', () => {
+    expect(stats.oneDirectionBars).toBeLessThan(0.55)
+    expect(stats.topShapeShare).toBeLessThan(0.05)
   })
 
   it('keeps skip notes and triplets occasional', () => {

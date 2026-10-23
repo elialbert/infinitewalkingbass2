@@ -1,3 +1,4 @@
+import { Note } from 'tonal'
 import SongWriter from 'src/lib/SongWriter.js';
 import Section from 'src/lib/Section.js';
 import Line from 'src/lib/Line.js';
@@ -69,7 +70,8 @@ it('determines notes', () => {
   let bar1 = sw.sectionA.lines[0].bars[0]
   bar1.chooseNotes()
   expect(bar1.chosenFirstNote).toEqual('D2')
-  expect(bar1.chosenNotesBetween.length).toEqual(2)
+  bar1.beats.forEach(b => expect(Note.midi(b.note)).not.toBe(null))
+  expect(bar1.shape.split(',').length).toEqual(3)
 
   let bar2 = sw.sectionA.lines[0].bars[1]
   bar2.chooseNotes()
@@ -87,7 +89,8 @@ it('determines notes while changing chord', () => {
   let bar1 = sw.sectionA.lines[0].bars[0]
   bar1.chooseNotes()
   expect(bar1.chosenFirstNote).toEqual('D2')
-  expect(bar1.chosenNotesBetween.length).toEqual(2)
+  bar1.beats.forEach(b => expect(Note.midi(b.note)).not.toBe(null))
+  expect(bar1.shape.split(',').length).toEqual(3)
 
   let bar2 = sw.sectionA.lines[0].bars[1]
   bar2.chooseNotes()

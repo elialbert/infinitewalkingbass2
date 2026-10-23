@@ -1,6 +1,7 @@
 import { Chord, Interval, Note, Scale } from 'tonal'
 import utils from './utils.js'
 import musicUtils from './musicUtils.js'
+import WalkScorer from './WalkScorer.js'
 
 // bar-start notes below/above these turn the line around
 const TURN_UP_BELOW = Note.midi('A1')
@@ -121,8 +122,24 @@ class NoteChooser {
     return chosen
   }
 
+  // beats 2, 3 and 4 chosen together toward the next bar's beat 1, with the
+  // old one-at-a-time choice as a fallback when no candidate fits
+  chooseBeats(recentShapes) {
+    const target = this.runNextBarFirstNote()
+    this.pick = new WalkScorer(this.chord).choose(
+      Note.midi(this.chosenFirstNote), Note.midi(target), recentShapes)
+    if (this.pick) {
+      return this.pick.notes.map(m => Note.fromMidi(m))
+    }
+    this.lastNoteToward(target)
+    return [...this.notesBetween(), this.chosenLastNote]
+  }
+
   lastNote() {
-    const nextBarFirstNote = this.runNextBarFirstNote()
+    return this.lastNoteToward(this.runNextBarFirstNote())
+  }
+
+  lastNoteToward(nextBarFirstNote) {
     this.setNoteOptions(nextBarFirstNote)
 
     let chosen
