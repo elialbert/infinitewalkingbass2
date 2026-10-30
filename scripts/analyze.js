@@ -5,7 +5,8 @@
 //   npm run analyze -- --json > before.json # machine-readable
 //   npm run analyze -- --midi out.mid       # also write a MIDI file to listen to
 //   npm run analyze -- --print 2            # print the first 2 choruses bar by bar
-//   npm run analyze -- --knobs skips=2,chromatic=1  # with generator dials moved
+//   npm run analyze -- --style cooking          # a style from Knobs.js STYLES
+//   npm run analyze -- --knobs fills=2,chromatic=1  # with generator knobs moved
 import fs from 'fs'
 import midiPkg from '@tonejs/midi'
 import { Note } from 'tonal'
@@ -23,9 +24,8 @@ function arg(name, fallback) {
 }
 
 const knobArg = arg('knobs', '')
-if (knobArg) {
-  setKnobs(Object.fromEntries(knobArg.split(',').map(kv => kv.split('=')).map(([k, v]) => [k, Number(v)])))
-}
+const knobValues = knobArg ? Object.fromEntries(knobArg.split(',').map(kv => kv.split('=')).map(([k, v]) => [k, Number(v)])) : {}
+setKnobs({ style: arg('style', undefined), ...knobValues })
 const songs = Number(arg('songs', 300))
 const seed = Number(arg('seed', 1))
 const songWriters = generateSongs(songs, seed)
@@ -46,9 +46,9 @@ const rows = [
   ['Stepwise runs (one direction, steps ≤ 2)', stats.stepwiseRuns, '%', '10–20%'],
   ['Most common bar shape', stats.topShapeShare, '%', '< 5%'],
   ['Distinct bar shapes', stats.distinctShapes, 'count', ''],
-  ['Beat 4 → 1 by half step', stats.approachHalfStep, '%', '35–55%'],
-  ['Beat 4 → 1 by whole step', stats.approachWholeStep, '%', '15–30%'],
-  ['Beat 4 → 1 by 4th/5th', stats.approachFourthFifth, '%', '10–25%'],
+  ['Beat 4 → 1 by half step', stats.approachHalfStep, '%', '45–65% (FiloBass 55%)'],
+  ['Beat 4 → 1 by whole step', stats.approachWholeStep, '%', '12–25% (FiloBass 17%)'],
+  ['Beat 4 → 1 by 4th/5th', stats.approachFourthFifth, '%', '10–25% (FiloBass 15%)'],
   ['Beat 4 → 1 by leap > 5th', stats.approachLeap, '%', '< 3%'],
   ['Beats 2–3 outside the harmony', stats.outsideBeats23, '%', '< 12%'],
   ['…of which not resolved by half step', stats.outsideUnresolved, '%', '< 4%'],
@@ -56,9 +56,26 @@ const rows = [
   ['Leaps larger than a 5th', stats.leapsOverFifth, '%', '< 5%'],
   ['Two-chord bars: beat 3 on the 2nd root', stats.splitBeat3Root, '%', '70–95%'],
   ['Bars in two-feel / pedal', `${(stats.twoFeelBars * 100).toFixed(1)}% / ${(stats.pedalBars * 100).toFixed(1)}%`, 'text', ''],
-  ['Beats with a skip note', stats.skipBeats, '%', '8–13%'],
-  ['Bars with a triplet figure', stats.tripletBars, '%', '10–15%']
+  ['Chord change: beats 3-4-1 by half steps', stats.doubleChromatic, '%', '~16%'],
+  ['Chord change: beat 3 already on the target', stats.beat3OnTarget, '%', '~4%'],
+  ['V→I: beat 4 → 1 by half step', stats.resolutionHalfStep, '%', '~56%'],
+  ['Same chord continues: beat 1 root', stats.sameChordRoot, '%', '~35%'],
+  ['Bars with a fill', stats.fillBars, '%', '~29%'],
+  ['Fills on beat 1 / 2 / 3 / 4', stats.fillByBeat.map(v => `${(v * 100).toFixed(0)}`).join(' / ') + ' %', 'text', '12 / 8 / 9 / 12 %'],
+  ['Fill bar right after a fill bar', stats.fillAfterFill, '%', '~49%'],
+  ['Same fill as the bar before', stats.sameFillNextBar, '%', '~5%'],
+  ['8-bar stretches with no fill', stats.quietWindows, '%', '~22%'],
+  ['Fills: anticipation / approach / repeat / octave / run / other',
+    ['anticipation', 'approach', 'repeat', 'octave', 'run', 'other'].map(k => `${Math.round((stats.fillKinds[k] || 0) * 100)}`).join(' / '),
+    'text', '~30 / 25 / 15 / 3 / 10 / 15'],
+  ['Short main notes (< 0.6 beat)', stats.shortNotes, '%', ''],
+  ['Bars long-long-long-short', stats.lllsBars, '%', ''],
+  ['Same long/short pattern as the bar before', stats.sameShortPattern, '%', '']
 ]
+
+// FiloBass (Riley & Dixon, ISMIR 2023): 48 Aebersold tracks, 10,963 walking
+// bars. Measured with the same definitions; the transcriptions leave out
+// subtle ghost notes, so repeats and octaves are undercounted there.
 
 function fmt(value, kind) {
   if (kind === '%') { return `${(value * 100).toFixed(1)}%` }
@@ -68,7 +85,7 @@ function fmt(value, kind) {
 function printBars(sw) {
   console.log(`\n== ${sw.formName} in ${sw.key}, chorus ${sw.chorusInKey + 1} of ${sw.chorusesInKey}`)
   sw.sections().forEach(section => section.lines.forEach(line => line.bars.forEach(bar => {
-    const extras = bar.beats.map(b => b.octaveBounce !== 'no' ? 'skip' : b.triplet ? 'trip' : '').filter(Boolean)
+    const extras = bar.beats.map(b => b.fill && b.fill.kind).filter(Boolean)
     const feel = bar.twoFeel ? 'two' : bar.pedal ? 'pedal' : bar.direction
     console.log(`${section.part.padEnd(6)} ${bar.chords.join(' ').padEnd(13)} ${feel.padEnd(5)} ` +
       bar.beats.map(b => b.note.padEnd(4)).join(' ') + (extras.length ? `  (${extras.join(',')})` : ''))

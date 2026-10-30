@@ -6,6 +6,8 @@ import WalkScorer from './WalkScorer.js'
 // bar-start notes below/above these turn the line around
 const TURN_UP_BELOW = Note.midi('A1')
 const TURN_DOWN_ABOVE = Note.midi('Bb2')
+// beat 1 when the chord carries on: root, 5th, 3rd or a scale note
+const SAME_CHORD_TARGETS = [30, 30, 25, 15]
 
 class NoteChooser {
   constructor(chord, nextChord, lastBarNextBarFirstNote, notes, key,
@@ -74,7 +76,7 @@ class NoteChooser {
     } else {
       // Same chord continues — prefer chord tones to stay grounded
       const sameChordChoice = utils.chooseWithProbabilities(
-        ['root', 'fifth', 'third', 'scale'], [60, 20, 10, 10])
+        ['root', 'fifth', 'third', 'scale'], SAME_CHORD_TARGETS)
 
       if (sameChordChoice !== 'scale') {
         let noteIndex = sameChordChoice === 'root' ? 0 : sameChordChoice === 'fifth' ? 2 : 1
@@ -96,10 +98,10 @@ class NoteChooser {
   }
 
   // beats 2, 3 and 4, chosen together toward the next bar's beat 1
-  chooseBeats(recentShapes) {
+  chooseBeats(recentShapes, context) {
     const target = this.runNextBarFirstNote()
     this.pick = new WalkScorer(...(this.barChords || [this.chord])).choose(
-      Note.midi(this.chosenFirstNote), Note.midi(target), recentShapes)
+      Note.midi(this.chosenFirstNote), Note.midi(target), recentShapes, context)
     if (this.pick) {
       return this.pick.notes.map(m => Note.fromMidi(m))
     }

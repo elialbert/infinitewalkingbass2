@@ -6,6 +6,7 @@
 import { Chord, Note, Scale } from 'tonal'
 import SongWriter from '../src/lib/SongWriter.js'
 import utils from '../src/lib/utils.js'
+import { articulate } from '../src/lib/Articulation.js'
 
 export const RANGE = { low: Note.midi('E1'), high: Note.midi('D3') }
 
@@ -52,6 +53,109 @@ export function generateSongs(songs, seed) {
 
 function bump(obj, key) { obj[key] = (obj[key] || 0) + 1 }
 
+const isDominant = (chord) => Chord.get(chord).type === 'dominant seventh'
+const rootChroma = (chord) => Note.chroma(Chord.get(chord).tonic)
+// a dominant going home: root down a 5th, or down a half step (tritone sub)
+function isResolution(from, to) {
+  if (!isDominant(from) || from === to) { return false }
+  const down = (rootChroma(from) - rootChroma(to) + 12) % 12
+  return down === 7 || down === 1
+}
+
+// What a fill beat plays after its main note, judged only from the notes:
+// the next beat's note early, a step into it, the same note again, the
+// octave, or a run of two or more.
+function fillKind(events, nextMidi) {
+  const notes = events.filter(e => e)
+  if (notes.length > 2) { return 'run' }
+  const main = Note.midi(notes[0].note)
+  const pick = Note.midi(notes[1].note)
+  if (nextMidi !== null && pick === nextMidi) { return 'anticipation' }
+  if (pick === main) { return 'repeat' }
+  if (Math.abs(pick - main) === 12) { return 'octave' }
+  if (nextMidi !== null && Math.abs(nextMidi - pick) <= 2) { return 'approach' }
+  return 'other'
+}
+
+// Rhythm of the walking bars, measured on the events the player gets (any
+// beat with more than one note is a fill), with note lengths from the
+// default articulation. Targets come from the FiloBass corpus (48 tracks).
+function rhythm(songWriters) {
+  const c = {
+    bars: 0, fillBars: 0, fillByBeat: [0, 0, 0, 0], kinds: {}, fills: 0,
+    afterFill: 0, fillAfterFill: 0, sameFill: 0, windows: 0, quietWindows: 0,
+    mains: 0, shorts: 0, lllsBars: 0, artPairs: 0, sameArt: 0
+  }
+  const previous = utils.random
+  utils.seed(99)
+  songWriters.forEach(sw => {
+    const articulated = articulate(sw.flatten(sw.notes))
+    const bars = sw.bars()
+    let prev = null
+    let run = []
+    bars.forEach((bar, bi) => {
+      if (bar.twoFeel || bar.pedal) { prev = null; run = []; return }
+      c.bars++
+      const beats = articulated.slice(bi * 4, bi * 4 + 4)
+      const nextBeats = articulated.slice(bi * 4 + 4, bi * 4 + 8)
+      const firstOf = (events) => { const e = events && events.find(x => x); return e ? Note.midi(e.note) : null }
+      const fills = beats.map((events, b) => {
+        if (events.filter(e => e).length < 2) { return null }
+        const next = b < 3 ? firstOf(beats[b + 1]) : firstOf(nextBeats[0])
+        return `${b}:${fillKind(events, next)}`
+      })
+      fills.forEach((f, b) => {
+        if (!f) { return }
+        c.fills++
+        c.fillByBeat[b]++
+        bump(c.kinds, f.split(':')[1])
+      })
+      const has = fills.some(Boolean)
+      if (has) { c.fillBars++ }
+      if (prev) {
+        if (prev.fills.some(Boolean)) {
+          c.afterFill++
+          if (has) { c.fillAfterFill++ }
+          if (has && prev.fills.join() === fills.join()) { c.sameFill++ }
+        }
+      }
+      // long or short main notes; a note clipped below 60% of a beat is short
+      const pattern = beats.map(events => {
+        const e = events.find(x => x)
+        c.mains++
+        const short = e.length < 0.6
+        if (short) { c.shorts++ }
+        return short ? 'S' : 'L'
+      }).join('')
+      if (pattern === 'LLLS') { c.lllsBars++ }
+      if (prev) {
+        c.artPairs++
+        if (prev.pattern === pattern && pattern !== 'LLLL') { c.sameArt++ }
+      }
+      prev = { fills, pattern }
+      run.push(has)
+      if (run.length === 8) {
+        c.windows++
+        if (!run.some(Boolean)) { c.quietWindows++ }
+        run = []
+      }
+    })
+  })
+  utils.setRandom(previous)
+  const r = (a, b) => b ? a / b : 0
+  return {
+    fillBars: r(c.fillBars, c.bars),
+    fillByBeat: c.fillByBeat.map(v => r(v, c.bars)),
+    fillAfterFill: r(c.fillAfterFill, c.afterFill),
+    sameFillNextBar: r(c.sameFill, c.afterFill),
+    quietWindows: r(c.quietWindows, c.windows),
+    fillKinds: Object.fromEntries(Object.entries(c.kinds).map(([k, v]) => [k, r(v, c.fills)])),
+    shortNotes: r(c.shorts, c.mains),
+    lllsBars: r(c.lllsBars, c.bars),
+    sameShortPattern: r(c.sameArt, c.artPairs)
+  }
+}
+
 export function analyze(songWriters) {
   const c = {
     bars: 0, beats: 0, invalid: 0, outOfRange: 0, awkward: 0,
@@ -60,7 +164,9 @@ export function analyze(songWriters) {
     middle: 0, outside: 0, outsideUnresolved: 0,
     intervals: 0, repeats: 0, bigLeaps: 0,
     twoFeelBars: 0, pedalBars: 0, splitBars: 0, splitBeat3Root: 0,
-    skips: 0, tripletBars: 0, oneDirection: 0, stepwiseRuns: 0, shapes: {},
+    oneDirection: 0, stepwiseRuns: 0, shapes: {},
+    resolutions: 0, resolutionHalf: 0, changeApproaches: 0, doubleChromatic: 0, beat3OnTarget: 0,
+    sameChordBars: 0, sameChordRoot: 0,
     intervalHistogram: {}, midis: []
   }
 
@@ -89,10 +195,8 @@ export function analyze(songWriters) {
         if (m === null) { c.invalid++; return }
         if (m < RANGE.low || m > RANGE.high) { c.outOfRange++ }
         if (awkwardSpelling.test(b.note)) { c.awkward++ }
-        if (b.octaveBounce !== 'no') { c.skips++ }
         c.midis.push(m)
       })
-      if (bar.beats.some(b => b.triplet)) { c.tripletBars++ }
 
       // the bar actually played before this one (it may be two-feel or a pedal)
       const prev = bar.lastBar && bar.lastBar.chords ? bar.lastBar : null
@@ -127,9 +231,27 @@ export function analyze(songWriters) {
       })
 
       const next = bars[bi + 1]
+      if (next && next === bar.nextBar && next.chord === bar.lastChord) {
+        c.sameChordBars++
+        if (Note.chroma(next.beats[0].note) === rootChroma(next.chord)) { c.sameChordRoot++ }
+      }
       if (next && next === bar.nextBar) {
         c.approaches++
-        const d = Math.abs(Note.midi(next.beats[0].note) - midis[3])
+        const target = Note.midi(next.beats[0].note)
+        const d = Math.abs(target - midis[3])
+        if (next.chord !== bar.lastChord) {
+          c.changeApproaches++
+          // both of beats 3 and 4 stepping in by half step, the same way
+          if (d === 1 && Math.abs(midis[3] - midis[2]) === 1 && (midis[3] - midis[2]) === (target - midis[3])) {
+            c.doubleChromatic++
+          }
+          // beat 3 already on the note the next bar lands on
+          if (Note.chroma(notes[2]) === Note.chroma(next.beats[0].note)) { c.beat3OnTarget++ }
+          if (isResolution(bar.lastChord, next.chord)) {
+            c.resolutions++
+            if (d === 1) { c.resolutionHalf++ }
+          }
+        }
         if (d === 1) { c.approachHalf++ }
         else if (d === 2) { c.approachWhole++ }
         else if (d === 5 || d === 7) { c.approachFourthFifth++ }
@@ -186,8 +308,11 @@ export function analyze(songWriters) {
     pedalBars: r(c.pedalBars, c.totalBars),
     splitBars: r(c.splitBars, c.bars),
     splitBeat3Root: r(c.splitBeat3Root, c.splitBars),
-    skipBeats: r(c.skips, c.beats),
-    tripletBars: r(c.tripletBars, c.bars),
+    resolutionHalfStep: r(c.resolutionHalf, c.resolutions),
+    doubleChromatic: r(c.doubleChromatic, c.changeApproaches),
+    beat3OnTarget: r(c.beat3OnTarget, c.changeApproaches),
+    sameChordRoot: r(c.sameChordRoot, c.sameChordBars),
+    ...rhythm(songWriters),
     intervalHistogram: Object.fromEntries(
       Object.entries(c.intervalHistogram).map(([k, v]) => [k, r(v, c.intervals)]))
   }

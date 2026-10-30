@@ -44,11 +44,26 @@ describe.each(results)('seed %i', (seed, stats) => {
     expect(stats.twoFeelBars).toBeLessThan(0.3)
   })
 
-  it('keeps skip notes and triplets occasional', () => {
-    expect(stats.skipBeats).toBeGreaterThan(0.07)
-    expect(stats.skipBeats).toBeLessThan(0.14)
-    expect(stats.tripletBars).toBeGreaterThan(0.08)
-    expect(stats.tripletBars).toBeLessThan(0.17)
+  it('walks chromatically into chord changes, most of all when resolving', () => {
+    expect(stats.doubleChromatic).toBeGreaterThan(0.1)
+    expect(stats.beat3OnTarget).toBeLessThan(0.07)
+    expect(stats.resolutionHalfStep).toBeGreaterThan(stats.approachHalfStep)
+    expect(stats.sameChordRoot).toBeLessThan(0.5)
+  })
+
+  it('fills about a quarter of the bars, in stretches, on any beat', () => {
+    expect(stats.fillBars).toBeGreaterThan(0.18)
+    expect(stats.fillBars).toBeLessThan(0.36)
+    expect(stats.fillAfterFill).toBeGreaterThan(stats.fillBars + 0.1)
+    expect(stats.quietWindows).toBeGreaterThan(0.1)
+    expect(Math.max(...stats.fillByBeat)).toBeLessThan(2 * Math.min(...stats.fillByBeat))
+    expect(stats.sameFillNextBar).toBeLessThan(0.1)
+  })
+
+  it('clips notes short now and then without falling into a pattern', () => {
+    expect(stats.shortNotes).toBeLessThan(0.15)
+    expect(stats.lllsBars).toBeLessThan(0.12)
+    expect(stats.sameShortPattern).toBeLessThan(0.04)
   })
 })
 

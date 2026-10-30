@@ -107,7 +107,7 @@ class SongWriter {
     const lastSection = this.sectionList[this.sectionList.length - 1]
     const lastLine = lastSection.lines[lastSection.lines.length - 1]
     const bar = lastLine.bars[lastLine.bars.length - 1]
-    return { nextBarFirstNote: bar.nextBarFirstNote, shape: bar.shape, direction: bar.direction }
+    return { nextBarFirstNote: bar.nextBarFirstNote, shape: bar.shape, direction: bar.direction, mood: bar.mood }
   }
 
   flatten(d) {

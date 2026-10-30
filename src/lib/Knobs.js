@@ -2,16 +2,24 @@ import utils from './utils.js'
 
 // Live generator controls. Each is a multiplier on the tuned constant it
 // names (1 = as tuned), except chromatic, a score bonus per outside note
-// (0 = as tuned). The player sets these from the dials; the generator reads
-// them as it writes each bar.
+// (0 = as tuned). The player picks a style; the generator reads the knobs
+// as it writes each bar.
 export const KNOB_DEFAULTS = {
-  skips: 1,      // Beat SKIP_CHANCE
-  triplets: 1,   // TripletChooser TRIPLET_CHANCE
+  fills: 1,      // Fills MOODS fill chances
   pedals: 1,     // Bar PEDAL_CHANCE
   pickups: 1,    // Bar PICKUP_CHANCE (two-feel)
   adventure: 1,  // WalkScorer temperature: higher strays further from the top pick
   chromatic: 0   // WalkScorer bonus (or, below 0, penalty) per outside note
 }
+
+// Pre-tuned sets of knobs, so the dials panel offers a feel rather than
+// six sliders. Hard bop is the generator as tuned.
+export const STYLES = {
+  relaxed: { label: 'Relaxed', fills: 0.55, pedals: 1.5, pickups: 0.6, adventure: 0.8, chromatic: -0.3 },
+  hardbop: { label: 'Hard bop', ...KNOB_DEFAULTS },
+  cooking: { label: 'Cooking', fills: 1.5, pedals: 0.7, pickups: 1.5, adventure: 1.2, chromatic: 0.2 }
+}
+export const DEFAULT_STYLE = 'hardbop'
 
 // Over a long listen the line wanders: each new chorus nudges one knob a
 // step past its dial, up to `max` (25%) and then back down to the dial, and
@@ -33,10 +41,12 @@ function update() {
   })
 }
 
-// take the knob values out of any settings object; other keys are ignored
+// set the knobs from a settings object: its `style`, then any knob values
+// given directly (the analyzer's --knobs); other keys are ignored
 export function setKnobs(values = {}) {
+  const style = STYLES[values.style] || STYLES[DEFAULT_STYLE]
   Object.keys(KNOB_DEFAULTS).forEach(k => {
-    dials[k] = values[k] ?? KNOB_DEFAULTS[k]
+    dials[k] = values[k] ?? style[k]
   })
   update()
 }
@@ -68,4 +78,4 @@ export function scaled(percent, knob) {
   return Math.max(0, Math.min(100, percent * knobs[knob]))
 }
 
-export default { knobs, setKnobs, stepDrift, resetDrift, driftSummary, scaled, KNOB_DEFAULTS }
+export default { knobs, setKnobs, stepDrift, resetDrift, driftSummary, scaled, KNOB_DEFAULTS, STYLES, DEFAULT_STYLE }

@@ -8,13 +8,11 @@ export const DEFAULT_SETTINGS = {
   octave: 0,           // 0 is real upright pitch; +1 for small speakers
   // feel
   legato: 0.92,
-  shortChance: 12,
-  shortLength: 0.5,
-  liftChance: 40,
+  shortChance: 10,
   laidBack: 8,         // ms behind the beat
   humanize: 6,         // ms of random timing spread
   dynamics: 1,         // 0 flattens accents, 2 exaggerates them
-  ghost: 1,            // level of skips, pickups and triplet approaches
+  ghost: 1,            // level of ghosted fills and two-feel pickups
   // tone
   brightness: 320,     // Hz the pluck filter settles to
   pluck: 1.2,          // octaves the filter opens on each attack

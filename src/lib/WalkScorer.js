@@ -49,8 +49,17 @@ export const WEIGHTS = {
   beat3Chromatic: -0.5,
   beat2ChordTone: 0.5,
   beat2Inside: 0.5,
-  approachHalfStep: 1.6,
-  approachWholeStep: 1.2,
+  approachHalfStep: 1.7,
+  approachWholeStep: 1.0,
+  // walking into a chord change: beats 3 and 4 both by half step, and not
+  // giving the arrival away by playing its note on beat 3
+  doubleChromatic: 0.5,
+  beat3OnTarget: -1.5,
+  // extra pull toward a half step (and a chromatic run in from beat 2) when
+  // the bar resolves: per level of `resolve`, 1 for a V-I, 2 for home
+  resolveHalfStep: 0.6,
+  resolveDoubleChromatic: 0.2,
+  homeChromaticRun: 0.6,
   approachFourthFifth: 0.6,
   approachThird: 0.3,
   approachLeap: -3,
@@ -158,8 +167,11 @@ class WalkScorer {
     return [null, false]
   }
 
-  score(first, cand, target, recentShapes) {
+  // context: { change: the next bar brings a new chord, resolve: 0 none,
+  // 1 a dominant resolving, 2 coming home (section start or tonic) }
+  score(first, cand, target, recentShapes, context = {}) {
     const W = WEIGHTS
+    const resolve = context.resolve || 0
     const notes = [first, ...cand]
     const [b2, b3, b4] = cand
     let s = 0
@@ -174,6 +186,21 @@ class WalkScorer {
     else if (approach === 5 || approach === 7) { s += W.approachFourthFifth }
     else if (approach === 3 || approach === 4) { s += W.approachThird }
     else { s += W.approachLeap }
+
+    const half = (from, to) => to - from === 1 || to - from === -1
+    const sameWay = Math.sign(b4 - b3) === Math.sign(target - b4)
+    const doubleChromatic = approach === 1 && half(b3, b4) && sameWay
+    if (context.change) {
+      if (doubleChromatic) { s += W.doubleChromatic }
+      if ((b3 - target) % 12 === 0) { s += W.beat3OnTarget }
+    }
+    if (resolve) {
+      if (approach === 1) { s += W.resolveHalfStep * resolve }
+      if (doubleChromatic) { s += W.resolveDoubleChromatic * resolve }
+      if (resolve === 2 && doubleChromatic && half(b2, b3) && Math.sign(b3 - b2) === Math.sign(b4 - b3)) {
+        s += W.homeChromaticRun
+      }
+    }
 
     const steps = [b2 - first, b3 - b2, b4 - b3]
     steps.forEach(d => {
@@ -204,10 +231,10 @@ class WalkScorer {
   }
 
   // pick beats 2-4; returns { notes: [b2, b3, b4] as midi, shape, cell }
-  choose(first, target, recentShapes = []) {
+  choose(first, target, recentShapes = [], context = {}) {
     const cands = this.candidates(first, target)
     if (cands.length === 0) { return null }
-    const scores = cands.map(c => this.score(first, c, target, recentShapes))
+    const scores = cands.map(c => this.score(first, c, target, recentShapes, context))
     const top = Math.max(...scores)
     const temperature = WEIGHTS.temperature * knobs.adventure
     const weights = scores.map(s => Math.exp((s - top) / temperature))

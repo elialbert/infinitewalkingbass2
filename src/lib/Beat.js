@@ -1,18 +1,10 @@
 import utils from './utils.js'
-import musicUtils from './musicUtils.js'
-import { Note } from 'tonal'
-import { scaled } from './Knobs.js'
 
-// skips above this jump down instead of up, and below this jump up
-const SKIP_UP_LIMIT = Note.midi('A2')
-const SKIP_DOWN_LIMIT = Note.midi('E2')
-
-// chance of a skip note, in percent: rare inside the bar, likelier on beat 4,
-// likeliest on beat 4 at the end of a 4-bar phrase. Averages about 10% of beats.
-const SKIP_CHANCE = { inside: 5, beat4: 25, phraseEnd: 35 }
-
-// skips are ghosted: short and soft, felt more than heard
+// fills (see Fills.js): the same note or the octave is ghosted, short and
+// soft; a note leading into the next beat is played, lighter than the beat
 const GHOST = { velocity: 0.5, duration: '32n' }
+const LEAD = { velocity: 0.65, duration: '8t' }
+const GHOSTED_FILLS = ['repeat', 'octave']
 
 // walking dynamics: a slight push on 2 and 4, a little human variation
 const DYNAMICS = { downbeat: 0.8, backbeat: 0.9, jitter: 0.08 }
@@ -23,21 +15,8 @@ class Beat {
   constructor(bar, beatIdx) {
     this.bar = bar
     this.beatIdx = beatIdx
-    this.onlyRoot = true
-    this.octaveBounce = this.chooseSkip()
-    this.triplet = false
-  }
-
-  chooseSkip() {
-    // half notes carry their own pickups instead
-    if (this.bar.twoFeel) { return 'no' }
-    let chance = SKIP_CHANCE.inside
-    if (this.beatIdx == 3) {
-      chance = this.bar.barIdx == 3 ? SKIP_CHANCE.phraseEnd : SKIP_CHANCE.beat4
-    }
-    chance = scaled(chance, 'skips')
-    if (utils.chooseWithProbabilities(['yes', 'no'], [chance, 100 - chance]) === 'no') { return 'no' }
-    return utils.chooseWithProbabilities(['8M', '-8M', '1P'], [25, 25, 50])
+    // { kind, notes } when Fills gives this beat extra notes
+    this.fill = null
   }
 
   // actual note choosing logic happens during second pass ie gather
@@ -47,15 +26,6 @@ class Beat {
 
   chooseNote(note) {
     this.note = note
-  }
-
-  // the skip note, kept to a playable register
-  bounceNote() {
-    let interval = this.octaveBounce
-    const midi = Note.midi(this.note)
-    if (interval == '8M' && midi > SKIP_UP_LIMIT) { interval = '-8M' }
-    if (interval == '-8M' && midi < SKIP_DOWN_LIMIT) { interval = '8M' }
-    return musicUtils.spell(Note.transpose(this.note, interval), this.bar.key, this.bar.chord)
   }
 
   dynamics() {
@@ -72,30 +42,28 @@ class Beat {
     if (this.bar.twoFeel) {
       return [{ note: this.note, ...this.dynamics(), duration: '4n' }]
     }
-    if (this.octaveBounce !== 'no') {
-      // the skip lands on the last triplet eighth of the beat (swung)
-      this.skipNote = this.bounceNote()
-      return [{ note: this.note, ...this.dynamics(), duration: '8t' }, null, { note: this.skipNote, ...GHOST }]
-    }
-    if (this.triplet) {
-      return this.triplet
+    if (this.fill) {
+      // one fill note lands on the last triplet eighth (the swung "and"),
+      // two fill the beat's triplet
+      const main = { note: this.note, ...this.dynamics(), duration: '8t' }
+      const style = GHOSTED_FILLS.includes(this.fill.kind) ? GHOST : LEAD
+      const notes = this.fill.notes.map(note => ({ note, ...style }))
+      return notes.length === 1 ? [main, null, notes[0]] : [main, ...notes]
     }
     return [{ note: this.note, ...this.dynamics(), duration: '8n' }]
   }
 
   // what the score shows for this beat after gather: the main note, or a
-  // dash for a held two-feel beat, plus any skip, pickup or triplet notes
-  // (small); `beat` is the score beat number each one plays on
+  // dash for a held two-feel beat, plus any fill or pickup notes (small);
+  // `beat` is the score beat number each one plays on
   display() {
     const nums = this.beatNumbers || []
     if (this.held) {
       return [{ text: '–' }, ...(this.pickup ? [{ text: this.pickup, beat: nums[0], small: true }] : [])]
     }
-    if (this.octaveBounce !== 'no' && this.skipNote) {
-      return [{ text: this.note, beat: nums[0] }, { text: this.skipNote, beat: nums[1], small: true }]
-    }
-    if (this.triplet) {
-      return this.triplet.map((t, i) => ({ text: t.note, beat: nums[i], small: true }))
+    if (this.fill) {
+      return [{ text: this.note, beat: nums[0] },
+        ...this.fill.notes.map((text, i) => ({ text, beat: nums[i + 1], small: true }))]
     }
     return [{ text: this.note, beat: nums[0] }]
   }

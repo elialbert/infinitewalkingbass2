@@ -1,7 +1,7 @@
 import Beat from './Beat.js'
 import { Chord, Note } from 'tonal'
 import NoteChooser from './NoteChooser.js'
-import TripletChooser from './TripletChooser.js'
+import { planFills } from './Fills.js'
 import musicUtils from './musicUtils.js'
 import utils from './utils.js'
 import { scaled } from './Knobs.js'
@@ -83,12 +83,30 @@ class Bar {
     // shapes of the last two bars, so this bar doesn't copy them
     const recentShapes = [this.lastBar, this.lastBar && this.lastBar.lastBar]
       .filter(b => b && b.shape).map(b => b.shape)
-    const [beat2, beat3, beat4] = this.noteChooser.chooseBeats(recentShapes)
+    const [beat2, beat3, beat4] = this.noteChooser.chooseBeats(recentShapes, this.resolution())
     this.cell = this.noteChooser.pick && this.noteChooser.pick.cell
     this.setBeats([this.chosenFirstNote, beat2, beat3, beat4])
     const midis = this.beats.map(b => Note.midi(b.note))
     this.shape = [midis[1] - midis[0], midis[2] - midis[1], midis[3] - midis[2]].join(',')
-    this.tripletChooser = new TripletChooser(this)
+    planFills(this)
+  }
+
+  // How strongly the next bar's beat 1 is an arrival: { change, resolve }
+  // where resolve is 2 coming home (the next section or chorus, or a
+  // dominant resolving to the tonic), 1 for any other dominant resolving
+  // (down a 5th, or down a half step from a tritone sub), else 0.
+  resolution() {
+    const from = this.lastChord
+    const to = this.nextChord
+    const change = from !== to
+    if (!change) { return { change, resolve: 0 } }
+    const sectionStart = !this.nextBar || this.nextBar.line.section !== this.line.section
+    const c = Chord.get(from)
+    const down = (Note.chroma(c.tonic) - Note.chroma(Chord.get(to).tonic) + 12) % 12
+    const resolving = c.type === 'dominant seventh' && (down === 7 || down === 1)
+    const toTonic = Note.chroma(Chord.get(to).tonic) === Note.chroma(this.key)
+    if (sectionStart || (resolving && toTonic)) { return { change, resolve: 2 } }
+    return { change, resolve: resolving ? 1 : 0 }
   }
 
   // a dominant that lasts into the next bar, starting on its root
@@ -157,7 +175,7 @@ class Bar {
   regenerate() {
     this.beats = []
     this.pedal = false
-    this.shape = this.cell = this.nextBarFirstNote = undefined
+    this.shape = this.cell = this.nextBarFirstNote = this.mood = undefined
     this.generate()
   }
 

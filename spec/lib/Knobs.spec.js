@@ -33,5 +33,16 @@ it('keeps the drift when a dial moves', () => {
   stepDrift()
   setKnobs({ adventure: 2 })
   expect(knobs.adventure).toBeCloseTo(2.1)
-  expect(knobs.skips).toEqual(1)
+  expect(knobs.fills).toEqual(1)
+})
+
+it('takes the knobs from a style, with any knob given directly on top', () => {
+  setKnobs({ style: 'relaxed' })
+  expect(knobs.fills).toBeLessThan(1)
+  expect(knobs.chromatic).toBeLessThan(0)
+  setKnobs({ style: 'cooking', fills: 2 })
+  expect(knobs.fills).toEqual(2)
+  expect(knobs.adventure).toBeGreaterThan(1)
+  setKnobs({ style: 'nonsense' })
+  expect(knobs.fills).toEqual(1)
 })

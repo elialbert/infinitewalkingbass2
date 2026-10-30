@@ -61,3 +61,31 @@ it('chooses reproducibly from the seeded random source', () => {
   expect(a).toEqual(b)
   expect(a.notes.length).toEqual(3)
 })
+
+it('walks into a resolution by half step more often than into other changes', () => {
+  utils.seed(4)
+  const ws = new WalkScorer('G7')
+  const first = Note.midi('G1')
+  const target = Note.midi('C2')
+  const halfShare = (context) => {
+    let half = 0
+    for (let i = 0; i < 400; i++) {
+      const pick = ws.choose(first, target, [], context)
+      if (Math.abs(target - pick.notes[2]) === 1) { half++ }
+    }
+    return half / 400
+  }
+  expect(halfShare({ change: true, resolve: 2 })).toBeGreaterThan(halfShare({ change: true, resolve: 0 }) + 0.1)
+  utils.seed(null)
+})
+
+it('does not give the arrival away on beat 3', () => {
+  const ws = new WalkScorer('G7')
+  const first = Note.midi('G1')
+  const target = Note.midi('C2')
+  const early = [Note.midi('A1'), Note.midi('C2'), Note.midi('B1')]
+  const later = [Note.midi('A1'), Note.midi('B1'), Note.midi('B1') + 2]
+  const s = (cand, context) => ws.score(first, cand, target, [], context)
+  expect(s(early, { change: true }) - s(early, {})).toBeLessThan(0)
+  expect(s(later, { change: true }) - s(later, {})).toEqual(0)
+})

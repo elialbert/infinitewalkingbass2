@@ -16,10 +16,32 @@ it('rings walking quarters for most of the beat', () => {
 })
 
 it('clips some notes short', () => {
-  utils.setRandom(() => 0)
-  const [[event]] = articulate([q('C2'), q('D2')])
+  const [[event]] = articulate([rolled('C2', 0), rolled('D2', 0.5)])
   expect(event.length).toEqual(DEFAULTS.shortLength)
   expect(event.mute).toBe(true)
+})
+
+// events with fixed draws, so a test can say which notes may be clipped
+const rolled = (note, roll) => [{ note, velocity: 0.8, duration: '8n', roll }]
+const shortOnes = (out) => out.map(([e]) => e.mute)
+
+it('never clips two notes running, or the same beat a bar apart', () => {
+  const beats = ['C2', 'D2', 'E2', 'F2', 'G2', 'A2', 'G2', 'F2'].map(n => rolled(n, 0.01))
+  beats[1][0].roll = 0.02
+  beats[4][0].roll = 0.03
+  const out = articulate(beats, { shortChance: 100 })
+  // beat 0 has the lowest draw, so its neighbours and beat 4 stay long
+  expect(shortOnes(out)[0]).toBe(true)
+  expect(shortOnes(out)[1]).toBe(false)
+  expect(shortOnes(out)[4]).toBe(false)
+  shortOnes(out).forEach((s, i) => { if (s && i > 0) { expect(shortOnes(out)[i - 1]).toBe(false) } })
+})
+
+it('clips before a leap more readily than before a step', () => {
+  const leap = articulate([rolled('C2', 0.12), rolled('G2', 0.9)], { shortChance: 10 })
+  const step = articulate([rolled('C2', 0.12), rolled('D2', 0.9)], { shortChance: 10 })
+  expect(leap[0][0].mute).toBe(true)
+  expect(step[0][0].mute).toBe(false)
 })
 
 it('stops a note before the same pitch is plucked again', () => {
@@ -54,9 +76,8 @@ it('lets two-feel half notes ring or lifts them early', () => {
 })
 
 it('respects settings', () => {
-  utils.setRandom(() => 0.5)
-  const out = articulate([q('C2'), q('D2'), q('E2')], { shortChance: 100, shortLength: 0.3 })
-  expect(out.map(([e]) => e.length)).toEqual([0.3, 0.3, 0.3])
+  const out = articulate([rolled('C2', 0.5), rolled('D2', 0.6), rolled('E2', 0.4)], { shortChance: 100, shortLength: 0.3 })
+  expect(out.map(([e]) => e.length)).toEqual([0.3, DEFAULTS.legato, 0.3])
 })
 
 it('keeps each note\'s draw, so raising a chance only adds short notes', () => {

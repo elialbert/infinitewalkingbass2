@@ -2,7 +2,7 @@
   import * as Tone from 'tone'
   import SongWriter from './../lib/SongWriter.js'
   import { articulate } from './../lib/Articulation.js'
-  import { setKnobs, stepDrift, driftSummary, KNOB_DEFAULTS } from './../lib/Knobs.js'
+  import { setKnobs, stepDrift, driftSummary, DEFAULT_STYLE } from './../lib/Knobs.js'
   import { BassRig, DEFAULT_SETTINGS as SOUND_DEFAULTS } from './../audio/BassRig.js'
   import Score from './Score.svelte'
   import Dials from './Dials.svelte'
@@ -22,8 +22,8 @@
   // or not it uses them, so a bar can be rewritten after it is scheduled
   const GRID = 3
 
-  // the sound and feel dials, plus the generator dials
-  const DEFAULT_SETTINGS = { ...SOUND_DEFAULTS, ...KNOB_DEFAULTS }
+  // the sound and feel dials, plus the line's style
+  const DEFAULT_SETTINGS = { ...SOUND_DEFAULTS, style: DEFAULT_STYLE }
   const transport = Tone.getTransport()
   const draw = Tone.getDraw()
 
@@ -33,8 +33,10 @@
   function loadSettings() {
     try {
       localStorage.removeItem('iwb-dials')
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY))
-      return { ...DEFAULT_SETTINGS, ...(saved || {}) }
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}
+      // dials that have since been retired (the old line dials) are dropped
+      const known = Object.fromEntries(Object.entries(saved).filter(([k]) => k in DEFAULT_SETTINGS))
+      return { ...DEFAULT_SETTINGS, ...known }
     } catch (e) {
       return { ...DEFAULT_SETTINGS }
     }
@@ -56,13 +58,12 @@
   }
   // only the feel dials change note lengths; moving any other dial keeps
   // the lengths already drawn
-  const FEEL_KEYS = ['legato', 'shortChance', 'shortLength', 'liftChance']
+  const FEEL_KEYS = ['legato', 'shortChance']
   $: feelKey = FEEL_KEYS.map(k => settings[k]).join()
   $: rearticulate(feelKey)
 
-  // the generator dials rewrite the line from the next bar on, once the
-  // slider has rested for a moment
-  $: knobKey = Object.keys(KNOB_DEFAULTS).map(k => settings[k]).join()
+  // a new style rewrites the line from the next bar on, after a moment
+  $: knobKey = settings.style
   let knobTimer
   let lastKnobKey
   $: if (knobKey !== lastKnobKey) {
@@ -85,10 +86,10 @@
   // the chorus on screen, and the score beat sounding now
   let sw = writeChorus(null)
   let currentBeatNumber = -1
-  // which line dials have drifted, for the dials panel
+  // which line knobs have drifted, for the dials panel
   let drift = ''
 
-  // each chorus after the first drifts the line dials a little
+  // each chorus after the first drifts the line knobs a little
   function writeChorus(prev) {
     if (prev) {
       stepDrift()

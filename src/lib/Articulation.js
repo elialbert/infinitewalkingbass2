@@ -1,18 +1,24 @@
+import { Note } from 'tonal'
 import utils from './utils.js'
 
 // How long each note rings, as a fraction of the time until the next note.
 // The generator says what to play; this says how a player lets go of it.
 // A walking line is mostly legato, but a real bassist clips some notes,
 // lifts before a re-plucked repeat, and lets two-feel half notes breathe.
+//
+// Short notes are not sprinkled evenly: they come more often before a leap
+// (where the hand shifts) and never next to another short note or on the
+// same beat as one in the bar before or after, so they don't settle into a
+// pattern like long-long-short-short.
 export const DEFAULTS = {
   legato: 0.92,      // share of the gap a normal note fills
-  shortChance: 12,   // percent of walking notes played short
+  shortChance: 10,   // percent of walking notes that may be played short
   shortLength: 0.5,  // a short note's length, in beats
   liftChance: 40,    // percent of two-feel half notes lifted early
-  ghostLength: 0.2   // skips and pickups, in beats
+  ghostLength: 0.2   // ghosted fills and two-feel pickups, in beats
 }
 
-// durations the generator writes for ghosted skips, pickups and approaches
+// durations the generator writes for ghosted fills and two-feel pickups
 const GHOST_DURATIONS = ['32n', '16t']
 
 // Takes the flattened chorus (one array of events per beat; null is
@@ -34,12 +40,19 @@ export function articulate(beats, settings = {}, next = null) {
   })
   const following = next && next.find(e => e)
   const out = beats.map(events => events.map(() => null))
-  onsets.forEach((onset, k) => {
+  onsets.forEach(onset => {
     if (onset.event.roll === undefined) { onset.event.roll = utils.random() }
+  })
+  const byStart = new Map(onsets.map(onset => [onset.start, onset]))
+  onsets.forEach((onset, k) => {
     const after = onsets[k + 1]
     const gap = after ? after.start - onset.start : beats.length - onset.start
     const nextNote = after ? after.event.note : following && following.note
-    out[onset.b][onset.i] = { ...onset.event, gap, ...noteLength(onset.event, gap, nextNote, s) }
+    // the notes a short note must not sit beside: the ones either side, and
+    // the same beat in the bars either side
+    const neighbors = [onsets[k - 1], after, byStart.get(onset.start - 4), byStart.get(onset.start + 4)]
+    const canClip = neighbors.every(n => !n || onset.event.roll < n.event.roll)
+    out[onset.b][onset.i] = { ...onset.event, gap, ...noteLength(onset.event, gap, nextNote, s, canClip) }
   })
   return out
 }
@@ -48,7 +61,10 @@ function chance(event, percent) {
   return event.roll * 100 < percent
 }
 
-function noteLength(event, gap, nextNote, s) {
+// short notes are likelier before a leap of a 4th or more, rarer before a step
+const SHORT_BEFORE = { leap: 1.8, step: 0.7 }
+
+function noteLength(event, gap, nextNote, s, canClip) {
   if (GHOST_DURATIONS.includes(event.duration)) {
     return { length: Math.min(gap * s.legato, s.ghostLength), mute: true }
   }
@@ -58,8 +74,12 @@ function noteLength(event, gap, nextNote, s) {
     return { length: gap * s.legato, mute: false }
   }
   // a walking quarter (or longer): sometimes clipped short
-  if (gap >= 1 && chance(event, s.shortChance)) {
-    return { length: Math.min(s.shortLength, gap), mute: true }
+  if (gap >= 1 && canClip) {
+    const jump = nextNote ? Math.abs(Note.midi(nextNote) - Note.midi(event.note)) : 0
+    const lean = jump >= 5 ? SHORT_BEFORE.leap : jump <= 2 ? SHORT_BEFORE.step : 1
+    if (chance(event, s.shortChance * lean)) {
+      return { length: Math.min(s.shortLength, gap), mute: true }
+    }
   }
   // the same pitch again has to be stopped before it is plucked again
   if (nextNote === event.note) {

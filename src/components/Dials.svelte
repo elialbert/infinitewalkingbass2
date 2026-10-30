@@ -1,17 +1,17 @@
 <script>
   import { onMount } from 'svelte'
+  import { STYLES } from './../lib/Knobs.js'
 
   export let settings
   export let rig
   export let defaults
-  // line dials nudged past their settings as the choruses go by
+  // line knobs nudged past the style as the choruses go by
   export let drift = ''
 
   const pct = v => `${Math.round(v)}%`
   const ms = v => `${v > 0 ? '+' : ''}${v} ms`
   const db = v => `${v > 0 ? '+' : ''}${v} dB`
   const x = v => `×${Number(v).toFixed(2)}`
-  const beats = v => `${Number(v).toFixed(2)} beat`
 
   const groups = [
     {
@@ -28,30 +28,10 @@
       dials: [
         { key: 'legato', label: 'Legato', min: 0.4, max: 1, step: 0.01, fmt: v => pct(v * 100),
           hint: 'how much of the beat a note rings' },
-        { key: 'shortChance', label: 'Short notes', min: 0, max: 60, step: 1, fmt: pct },
-        { key: 'shortLength', label: 'Short length', min: 0.15, max: 0.9, step: 0.05, fmt: beats },
-        { key: 'liftChance', label: 'Two-feel lifts', min: 0, max: 100, step: 5, fmt: pct,
-          hint: 'half notes cut on the and of two' },
+        { key: 'shortChance', label: 'Short notes', min: 0, max: 40, step: 1, fmt: pct,
+          hint: 'notes clipped short, mostly before a leap' },
         { key: 'dynamics', label: 'Accents', min: 0, max: 2.5, step: 0.05, fmt: x },
         { key: 'ghost', label: 'Ghost notes', min: 0, max: 1.5, step: 0.05, fmt: x }
-      ]
-    },
-    {
-      name: 'Lines',
-      note: 'rewrites the line from the next bar',
-      dials: [
-        { key: 'skips', label: 'Skip notes', min: 0, max: 4, step: 0.1, fmt: x,
-          hint: 'octave and repeated-note skips' },
-        { key: 'triplets', label: 'Triplets', min: 0, max: 5, step: 0.1, fmt: x },
-        { key: 'pedals', label: 'Pedals', min: 0, max: 5, step: 0.1, fmt: x,
-          hint: 'repeated roots under a dominant' },
-        { key: 'pickups', label: 'Pickups', min: 0, max: 3, step: 0.1, fmt: x,
-          hint: 'short notes leading out of two-feel half notes' },
-        { key: 'adventure', label: 'Adventure', min: 0.3, max: 3, step: 0.05, fmt: x,
-          hint: 'how far from the most textbook bar it strays' },
-        { key: 'chromatic', label: 'Chromatic', min: -3, max: 3, step: 0.1,
-          fmt: v => `${v > 0 ? '+' : ''}${Number(v).toFixed(1)}`,
-          hint: 'favor (+) or avoid (−) notes outside the chord scale' }
       ]
     },
     {
@@ -125,6 +105,12 @@
 
 <section class="dials" aria-label="Dials">
   <div class="top">
+    <label class="preset" title="how busy and how outside the line plays; rewrites it from the next bar">
+      <span>Style</span>
+      <select bind:value={settings.style}>
+        {#each Object.entries(STYLES) as [value, s]}<option {value}>{s.label}</option>{/each}
+      </select>
+    </label>
     <label class="preset">
       <span>Voice</span>
       <select bind:value={settings.preset}>
@@ -147,7 +133,6 @@
           <button type="button" class="btn reset" on:click={() => reset(group.dials.map(d => d.key))}>reset</button>
         </legend>
         {#if group.note}<p class="note">{group.note}</p>{/if}
-        {#if group.name === 'Lines' && drift}<p class="note">drifting: {drift}</p>{/if}
         {#each group.dials as d}
           <label class="dial" title={d.hint || ''}>
             <span class="name">{d.label}</span>
@@ -159,6 +144,7 @@
       </fieldset>
     {/each}
   </div>
+  {#if drift}<p class="note">line drifting past the style: {drift}</p>{/if}
   <p class="tip">Double-click a slider to reset it. Settings are remembered in this browser.</p>
 </section>
 

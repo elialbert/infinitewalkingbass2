@@ -39,51 +39,34 @@ it('updates note with chooseNote', () => {
   expect(beat.note).toEqual('D')
 })
 
-it('gathers with octave bounce', () => {
-  // random=0 -> getRandomIntInclusive(1,100)=1 -> skip 'yes', then '8M'
-  const beat = makeBeat(0)
-  expect(beat.octaveBounce).toEqual('8M')
+it('plays a one-note fill on the last triplet eighth', () => {
+  const beat = makeBeat(0.99)
   beat.generate('C2')
+  beat.fill = { kind: 'anticipation', notes: ['F2'] }
   const result = beat.gather()
-  // the skip falls on the last triplet eighth of the beat
-  expect(result[0].note).toEqual('C2')
+  expect(result[0]).toMatchObject({ note: 'C2', duration: '8t', beat: 0 })
   expect(result[1]).toBe(null)
-  expect(result[2]).toEqual({ note: 'C3', velocity: 0.5, duration: '32n', beat: 1 })
+  expect(result[2]).toMatchObject({ note: 'F2', duration: '8t', beat: 1 })
 })
 
-it('bounces down instead of up when the note is already high', () => {
-  const beat = makeBeat(0)
-  expect(beat.octaveBounce).toEqual('8M')
-  beat.generate('C3')
-  expect(beat.gather()[2].note).toEqual('C2')
-})
-
-it('gathers with triplet', () => {
-  // random=0.99 -> octaveBounce='no'
-  const beat = makeBeat(0.99)
-  expect(beat.octaveBounce).toEqual('no')
-  beat.generate('C3')
-  beat.triplet = [{ note: 'C3' }, { note: 'D3' }, { note: 'E3' }]
-  const result = beat.gather()
-  expect(result.map(e => e.note)).toEqual(['C3', 'D3', 'E3'])
-  expect(result.map(e => e.beat)).toEqual([0, 1, 2])
-})
-it('numbers triplet notes consecutively so the score highlight stays in sync', () => {
+it('ghosts a repeat or octave fill', () => {
   const beat = makeBeat(0.99)
   beat.generate('C2')
-  beat.triplet = [{ note: 'Bb1' }, { note: 'B1' }, { note: 'C2' }]
-  beat.bar.line.section.song.beatCounter = 10
-  beat.gather()
-  expect(beat.beatNumbers).toEqual([10, 11, 12])
-  expect(beat.bar.line.section.song.beatCounter).toEqual(13)
-})
-
-it('ghosts the skip note', () => {
-  const beat = makeBeat(0)
-  beat.generate('C2')
+  beat.fill = { kind: 'octave', notes: ['C3'] }
   const skip = beat.gather()[2]
   expect(skip.velocity).toBeLessThan(0.6)
   expect(skip.duration).toEqual('32n')
+})
+
+it('numbers a run\'s notes consecutively so the score highlight stays in sync', () => {
+  const beat = makeBeat(0.99)
+  beat.generate('C2')
+  beat.fill = { kind: 'run', notes: ['D2', 'Eb2'] }
+  beat.bar.line.section.song.beatCounter = 10
+  const result = beat.gather()
+  expect(result.map(e => e.note)).toEqual(['C2', 'D2', 'Eb2'])
+  expect(beat.beatNumbers).toEqual([10, 11, 12])
+  expect(beat.bar.line.section.song.beatCounter).toEqual(13)
 })
 
 it('leans on beats 2 and 4', () => {
@@ -93,7 +76,6 @@ it('leans on beats 2 and 4', () => {
   utils.seed(4)
   const velocity = (idx) => {
     const beat = new Beat(bar, idx)
-    beat.octaveBounce = 'no'
     beat.generate('C2')
     return beat.gather()[0].velocity
   }
@@ -114,8 +96,9 @@ it('holds two-feel beats, with an optional pickup on the last triplet', () => {
 })
 
 it('describes itself for the score, numbering each sounding note', () => {
-  const skip = makeBeat(0)
+  const skip = makeBeat(0.99)
   skip.generate('C2')
+  skip.fill = { kind: 'octave', notes: ['C3'] }
   skip.gather()
   expect(skip.display()).toEqual([{ text: 'C2', beat: 0 }, { text: 'C3', beat: 1, small: true }])
 

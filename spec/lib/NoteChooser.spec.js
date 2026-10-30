@@ -38,8 +38,8 @@ it('next bar first note', () => {
   expect(nc.firstNote()).toEqual('C2')
   expect(nc.runNextBarFirstNote()).toEqual('B1')
 
-  // random=0.5 -> root; D1 is below the range so it goes up to D3 instead
-  setRandom(0.5)
+  // random=0.2 -> root; D1 is below the range so it goes up to D3 instead
+  setRandom(0.2)
   nc = prep('Dm7', 'Dm7', null, 'C', 'down')
   expect(nc.firstNote()).toEqual('D2')
   expect(nc.runNextBarFirstNote()).toEqual('D3')
@@ -74,8 +74,8 @@ it('turns down near the top of the range', () => {
 })
 
 it('same-chord continuation can choose fifth', () => {
-  // With random=0.7, chooseWithProbabilities([60,20,10,10]) → randVal=71 → 'fifth'
-  setRandom(0.7)
+  // With random=0.45, chooseWithProbabilities([30,30,25,15]) → randVal=46 → 'fifth'
+  setRandom(0.45)
   let nc = prep('C7', 'C7', 'C2', 'C', 'up')
   nc.firstNote()
   expect(nc.runNextBarFirstNote()).toEqual('G2')
