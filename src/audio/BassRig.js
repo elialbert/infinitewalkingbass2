@@ -9,6 +9,8 @@ export const DEFAULT_SETTINGS = {
   // feel
   legato: 0.92,
   shortChance: 0,      // off by default; the dial can bring them back
+  popChance: 80,       // skips whose beat note is stopped short
+  tripletLegato: 0.6,  // how much of its slot a note inside a triplet rings
   laidBack: 8,         // ms behind the beat
   humanize: 6,         // ms of random timing spread
   dynamics: 1,         // 0 flattens accents, 2 exaggerates them

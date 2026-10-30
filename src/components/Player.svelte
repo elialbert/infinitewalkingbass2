@@ -72,7 +72,7 @@
   }
   // only the feel dials change note lengths; moving any other dial keeps
   // the lengths already drawn
-  const FEEL_KEYS = ['legato', 'shortChance']
+  const FEEL_KEYS = ['legato', 'shortChance', 'popChance', 'tripletLegato']
   $: feelKey = FEEL_KEYS.map(k => settings[k]).join()
   $: rearticulate(feelKey)
 

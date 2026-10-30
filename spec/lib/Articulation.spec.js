@@ -57,12 +57,30 @@ it('looks into the next chorus for a repeat', () => {
   expect(event.mute).toBe(true)
 })
 
+const skip = () => [{ note: 'C2', velocity: 0.8, duration: '8t' }, null, { note: 'C3', velocity: 0.5, duration: '32n' }]
+
+it('pops the beat note of a skip short, or now and then lets it ring', () => {
+  utils.setRandom(() => 0.1)
+  const popped = articulate([skip(), q('D2')])[0][0]
+  expect(popped.length).toEqual(DEFAULTS.popLength)
+  expect(popped.mute).toBe(true)
+  utils.setRandom(() => 0.99)
+  expect(articulate([skip(), q('D2')])[0][0].length).toBeCloseTo((2 / 3) * DEFAULTS.legato)
+})
+
+it('detaches triplet notes but runs the last one into the beat', () => {
+  utils.setRandom(() => 0.99)
+  const run = [{ note: 'C2', velocity: 0.8, duration: '8t' }, { note: 'D2', velocity: 0.65, duration: '8t' }, { note: 'E2', velocity: 0.65, duration: '8t' }]
+  const out = articulate([run, q('F2')])
+  expect(out[0][0].length).toBeCloseTo(DEFAULTS.tripletLegato / 3)
+  expect(out[0][1].length).toBeCloseTo(DEFAULTS.tripletLegato / 3)
+  expect(out[0][2].length).toBeCloseTo(DEFAULTS.legato / 3)
+})
+
 it('keeps skips and pickups short and leaves silence alone', () => {
   utils.setRandom(() => 0.99)
-  const skip = [{ note: 'C2', velocity: 0.8, duration: '8t' }, null, { note: 'C3', velocity: 0.5, duration: '32n' }]
-  const out = articulate([skip, q('D2')])
+  const out = articulate([skip(), q('D2')])
   expect(out[0][1]).toBe(null)
-  expect(out[0][0].length).toBeCloseTo((2 / 3) * DEFAULTS.legato)
   expect(out[0][2].length).toBeLessThanOrEqual(DEFAULTS.ghostLength)
   expect(out[0][2].mute).toBe(true)
 })

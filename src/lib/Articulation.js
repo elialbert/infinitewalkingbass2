@@ -10,12 +10,20 @@ import utils from './utils.js'
 // (where the hand shifts) and never next to another short note or on the
 // same beat as one in the bar before or after, so they don't settle into a
 // pattern like long-long-short-short.
+//
+// Fills are the exception to legato: they are the color, and they pop. In a
+// skip (the beat, a gap, then the swung "and") the beat note is usually
+// stopped short so the gap is heard as space, and inside a triplet the
+// notes are a little detached; only the last fill note runs into the beat.
 export const DEFAULTS = {
   legato: 0.92,      // share of the gap a normal note fills
   shortChance: 0,    // percent of walking notes that may be played short (off: they sounded choppy)
   shortLength: 0.5,  // a short note's length, in beats
   liftChance: 40,    // percent of two-feel half notes lifted early
-  ghostLength: 0.2   // ghosted fills and two-feel pickups, in beats
+  ghostLength: 0.2,  // ghosted fills and two-feel pickups, in beats
+  popChance: 80,     // percent of skips whose beat note is stopped short
+  popLength: 0.15,   // that note's length, in beats
+  tripletLegato: 0.6 // share of the gap a note inside a triplet fills
 }
 
 // durations the generator writes for ghosted fills and two-feel pickups
@@ -52,7 +60,9 @@ export function articulate(beats, settings = {}, next = null) {
     // the same beat in the bars either side
     const neighbors = [onsets[k - 1], after, byStart.get(onset.start - 4), byStart.get(onset.start + 4)]
     const canClip = neighbors.every(n => !n || onset.event.roll < n.event.roll)
-    out[onset.b][onset.i] = { ...onset.event, gap, ...noteLength(onset.event, gap, nextNote, s, canClip) }
+    // a note followed by another in the same beat is inside a fill
+    const inFill = after && after.b === onset.b
+    out[onset.b][onset.i] = { ...onset.event, gap, ...noteLength(onset.event, gap, nextNote, s, canClip, inFill) }
   })
   return out
 }
@@ -64,9 +74,17 @@ function chance(event, percent) {
 // short notes are likelier before a leap of a 4th or more, rarer before a step
 const SHORT_BEFORE = { leap: 1.8, step: 0.7 }
 
-function noteLength(event, gap, nextNote, s, canClip) {
+function noteLength(event, gap, nextNote, s, canClip, inFill) {
   if (GHOST_DURATIONS.includes(event.duration)) {
     return { length: Math.min(gap * s.legato, s.ghostLength), mute: true }
+  }
+  if (inFill) {
+    // the beat note of a skip: popped, leaving space before the "and"
+    if (gap > 0.5) {
+      if (chance(event, s.popChance)) { return { length: Math.min(s.popLength, gap), mute: true } }
+      return { length: gap * s.legato, mute: false }
+    }
+    return { length: gap * s.tripletLegato, mute: true }
   }
   // two-feel half notes: ring through, or lift on the "and" of two
   if (gap >= 2) {

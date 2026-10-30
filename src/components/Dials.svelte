@@ -30,6 +30,10 @@
           hint: 'how much of the beat a note rings' },
         { key: 'shortChance', label: 'Short notes', min: 0, max: 40, step: 1, fmt: pct,
           hint: 'notes clipped short, mostly before a leap' },
+        { key: 'popChance', label: 'Skip pop', min: 0, max: 100, step: 1, fmt: pct,
+          hint: 'skips whose beat note is stopped short, leaving space' },
+        { key: 'tripletLegato', label: 'Triplet legato', min: 0.3, max: 1, step: 0.01, fmt: v => pct(v * 100),
+          hint: 'how much of its slot a triplet note rings' },
         { key: 'dynamics', label: 'Accents', min: 0, max: 2.5, step: 0.05, fmt: x },
         { key: 'ghost', label: 'Ghost notes', min: 0, max: 1.5, step: 0.05, fmt: x }
       ]

@@ -72,7 +72,6 @@ describe.each(results)('seed %i', (seed, stats) => {
   })
 
   it('lets walking notes ring, with no short notes by default', () => {
-    // what's left is a main note that only lasts until a fill on its beat
     expect(stats.shortNotes).toBeLessThan(0.05)
   })
 })

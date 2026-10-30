@@ -124,8 +124,11 @@ function rhythm(songWriters) {
           if (has && prev.fills.join() === fills.join()) { c.sameFill++ }
         }
       }
-      // long or short main notes; a note clipped below 60% of a beat is short
+      // long or short main notes; a note clipped below 60% of a beat is
+      // short. Fill beats are short on purpose (see Articulation.js), so
+      // only plain walking beats count.
       const pattern = beats.map(events => {
+        if (events.length > 1) { return 'L' }
         const e = events.find(x => x)
         c.mains++
         const short = e.length < 0.6
