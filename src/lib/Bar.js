@@ -69,13 +69,18 @@ class Bar {
   }
 
   // a beat 1 for the next bar that was played there before, if the next
-  // bar walks over harmony already heard
+  // bar walks over harmony already heard. The same harmony can be filed by a
+  // bar inside a long chord, free to start on a 9th, so on a chord change
+  // only a chord tone is taken.
   rememberedLanding() {
     const next = this.nextBar
     if (!this.memory || !next || next.twoFeel) { return null }
     const midi = this.memory.landing(next.memoryKey)
+    if (midi === null) { return null }
     const first = Note.midi(this.chosenFirstNote)
-    return midi !== null && Math.abs(midi - first) <= 12 ? Note.fromMidi(midi) : null
+    const tones = Chord.get(next.chord).notes.map(Note.chroma)
+    if (next.chord !== this.lastChord && !tones.includes(midi % 12)) { return null }
+    return Math.abs(midi - first) <= 12 ? Note.fromMidi(midi) : null
   }
 
   // play a bar again that was played on this harmony from this note before

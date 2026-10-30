@@ -71,10 +71,9 @@ describe.each(results)('seed %i', (seed, stats) => {
     expect(stats.sameFillNextBar).toBeLessThan(0.1)
   })
 
-  it('clips notes short now and then without falling into a pattern', () => {
-    expect(stats.shortNotes).toBeLessThan(0.15)
-    expect(stats.lllsBars).toBeLessThan(0.12)
-    expect(stats.sameShortPattern).toBeLessThan(0.04)
+  it('lets walking notes ring, with no short notes by default', () => {
+    // what's left is a main note that only lasts until a fill on its beat
+    expect(stats.shortNotes).toBeLessThan(0.05)
   })
 })
 

@@ -16,7 +16,7 @@ it('rings walking quarters for most of the beat', () => {
 })
 
 it('clips some notes short', () => {
-  const [[event]] = articulate([rolled('C2', 0), rolled('D2', 0.5)])
+  const [[event]] = articulate([rolled('C2', 0), rolled('D2', 0.5)], { shortChance: 10 })
   expect(event.length).toEqual(DEFAULTS.shortLength)
   expect(event.mute).toBe(true)
 })

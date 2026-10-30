@@ -33,6 +33,23 @@ it('walks a run into the next beat without starting on the beat\'s own note', ()
   expect(fillNotes('run', m('C2'), m('C#2'))).toBe(null)
 })
 
+it('arpeggiates chord tones a string apart, ending near the next beat', () => {
+  // up through the chord or root-5th-octave; going down would end more than
+  // a 5th from F2
+  const seen = new Set()
+  for (let i = 0; i < 20; i++) {
+    utils.setRandom(() => i / 20)
+    seen.add(fillNotes('arpeggio', m('C2'), m('F2'), 'C7').join())
+  }
+  expect([...seen].sort()).toEqual([[m('E2'), m('G2')].join(), [m('G2'), m('C3')].join()].sort())
+  // and down, toward a lower next beat
+  utils.setRandom(() => 0.5)
+  expect(fillNotes('arpeggio', m('G2'), m('D2'), 'C7')).toEqual([m('E2'), m('C2')])
+  // not from a note outside the chord, and not ending far from the next beat
+  expect(fillNotes('arpeggio', m('D2'), m('E2'), 'C7')).toBe(null)
+  expect(fillNotes('arpeggio', m('C2'), m('A3'), 'C7')).toBe(null)
+})
+
 function fakeBar(lastBar) {
   return {
     lastBar,

@@ -8,7 +8,7 @@ export const DEFAULT_SETTINGS = {
   octave: 0,           // 0 is real upright pitch; +1 for small speakers
   // feel
   legato: 0.92,
-  shortChance: 10,
+  shortChance: 0,      // off by default; the dial can bring them back
   laidBack: 8,         // ms behind the beat
   humanize: 6,         // ms of random timing spread
   dynamics: 1,         // 0 flattens accents, 2 exaggerates them

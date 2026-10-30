@@ -64,10 +64,15 @@ function isResolution(from, to) {
 
 // What a fill beat plays after its main note, judged only from the notes:
 // the next beat's note early, a step into it, the same note again, the
-// octave, or a run of two or more.
+// octave, an arpeggio (three notes one way, each a 3rd to a 5th apart, about
+// a string each) or another run of three or more.
 function fillKind(events, nextMidi) {
   const notes = events.filter(e => e)
-  if (notes.length > 2) { return 'run' }
+  if (notes.length > 2) {
+    const steps = notes.slice(1).map((e, i) => Note.midi(e.note) - Note.midi(notes[i].note))
+    const arpeggiated = steps.every(s => Math.abs(s) >= 3 && Math.abs(s) <= 7 && Math.sign(s) === Math.sign(steps[0]))
+    return arpeggiated ? 'arpeggio' : 'run'
+  }
   const main = Note.midi(notes[0].note)
   const pick = Note.midi(notes[1].note)
   if (nextMidi !== null && pick === nextMidi) { return 'anticipation' }

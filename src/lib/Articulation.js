@@ -12,7 +12,7 @@ import utils from './utils.js'
 // pattern like long-long-short-short.
 export const DEFAULTS = {
   legato: 0.92,      // share of the gap a normal note fills
-  shortChance: 10,   // percent of walking notes that may be played short
+  shortChance: 0,    // percent of walking notes that may be played short (off: they sounded choppy)
   shortLength: 0.5,  // a short note's length, in beats
   liftChance: 40,    // percent of two-feel half notes lifted early
   ghostLength: 0.2   // ghosted fills and two-feel pickups, in beats
