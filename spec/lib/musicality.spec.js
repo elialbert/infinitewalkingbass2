@@ -25,17 +25,28 @@ describe.each(results)('seed %i', (seed, stats) => {
   })
 
   it('walks smoothly, approaching each bar by step or 4th/5th', () => {
-    expect(stats.contourReversal).toBeGreaterThan(0.08)
-    expect(stats.contourReversal).toBeLessThan(0.25)
     expect(stats.approachHalfStep + stats.approachWholeStep + stats.approachFourthFifth).toBeGreaterThan(0.8)
     expect(stats.approachLeap).toBeLessThan(0.04)
     expect(stats.leapsOverFifth).toBeLessThan(0.05)
     expect(stats.repeatedNotes).toBeLessThan(0.04)
   })
 
-  it('varies the bar shape instead of running scales', () => {
-    expect(stats.oneDirectionBars).toBeLessThan(0.55)
-    expect(stats.topShapeShare).toBeLessThan(0.05)
+  it('arpeggiates and turns around instead of running scales', () => {
+    expect(stats.contourReversal).toBeGreaterThan(0.25)
+    expect(stats.contourReversal).toBeLessThan(0.45)
+    expect(stats.oneDirectionBars).toBeLessThan(0.45)
+    expect(stats.beat2ChordTone).toBeGreaterThan(0.45)
+    expect(stats.leapsInBar).toBeGreaterThan(0.2)
+    // the stock climb (R +2 +3 +4) is ~5% of FiloBass bars; recall bunches
+    // it up in a short sample like this one
+    expect(stats.topShapeShare).toBeLessThan(0.09)
+  })
+
+  it('comes back to its own figures when the harmony comes back', () => {
+    expect(stats.recallSameBar).toBeGreaterThan(0.25)
+    expect(stats.recallSameBar).toBeLessThan(0.6)
+    expect(stats.recallSameBeat1).toBeGreaterThan(0.6)
+    expect(stats.stockFigureUp4).toBeGreaterThan(0.1)
   })
 
   it('lands the second chord of a split bar on its root, and plays heads in two', () => {

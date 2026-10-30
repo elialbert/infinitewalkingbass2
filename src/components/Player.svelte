@@ -27,23 +27,37 @@
   const transport = Tone.getTransport()
   const draw = Tone.getDraw()
 
+  // The dials panel is for tuning and shows only at ?dials=1. Without it
+  // the line plays the tuned defaults, apart from the speaker choice; dials
+  // saved while tuning are kept for the next ?dials=1 visit.
+  const showDials = new URLSearchParams(window.location.search).get('dials') === '1'
+  const PUBLIC_KEYS = ['octave']
+
   // only dials moved off their defaults are saved, so a retuned default
   // still reaches anyone who never touched that dial
   const STORAGE_KEY = 'iwb-dials-changed'
-  function loadSettings() {
+  function loadSaved() {
     try {
       localStorage.removeItem('iwb-dials')
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}
-      // dials that have since been retired (the old line dials) are dropped
-      const known = Object.fromEntries(Object.entries(saved).filter(([k]) => k in DEFAULT_SETTINGS))
-      return { ...DEFAULT_SETTINGS, ...known }
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}
     } catch (e) {
-      return { ...DEFAULT_SETTINGS }
+      return {}
     }
+  }
+  function loadSettings() {
+    // dials that have since been retired (the old line dials) are dropped
+    const known = Object.entries(loadSaved())
+      .filter(([k]) => k in DEFAULT_SETTINGS && (showDials || PUBLIC_KEYS.includes(k)))
+    return { ...DEFAULT_SETTINGS, ...Object.fromEntries(known) }
   }
   function saveSettings(s) {
     const changed = Object.fromEntries(Object.entries(s).filter(([k, v]) => v !== DEFAULT_SETTINGS[k]))
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(changed)) } catch (e) {}
+    let saved = changed
+    if (!showDials) {
+      saved = Object.fromEntries(Object.entries(loadSaved()).filter(([k]) => !PUBLIC_KEYS.includes(k)))
+      PUBLIC_KEYS.forEach(k => { if (k in changed) { saved[k] = changed[k] } })
+    }
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(saved)) } catch (e) {}
   }
 
   let settings = loadSettings()
@@ -200,12 +214,14 @@
       Tinny
     </label>
   </fieldset>
-  <button type="button" class="play-btn"
-    aria-expanded={dialsOpen} on:click={() => dialsOpen = !dialsOpen}>
-    Dials {dialsOpen ? '▴' : '▾'}
-  </button>
+  {#if showDials}
+    <button type="button" class="play-btn"
+      aria-expanded={dialsOpen} on:click={() => dialsOpen = !dialsOpen}>
+      Dials {dialsOpen ? '▴' : '▾'}
+    </button>
+  {/if}
 </div>
-{#if dialsOpen}
+{#if showDials && dialsOpen}
   <Dials bind:settings {rig} {drift} defaults={DEFAULT_SETTINGS}></Dials>
 {/if}
 {#if sw}

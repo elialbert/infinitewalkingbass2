@@ -20,7 +20,7 @@ it('only offers in-range candidates whose outside notes resolve by half step', (
   cands.forEach(([b2, b3, b4]) => {
     ;[b2, b3, b4].forEach(n => {
       expect(n).toBeGreaterThanOrEqual(m('E1'))
-      expect(n).toBeLessThanOrEqual(m('D3'))
+      expect(n).toBeLessThanOrEqual(m('F3'))
     })
     if (!ws.isInside(b2)) { expect(Math.abs(b3 - b2)).toEqual(1) }
     if (!ws.isInside(b3)) { expect(Math.abs(b4 - b3)).toEqual(1) }

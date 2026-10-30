@@ -2,6 +2,7 @@ import Beat from './Beat.js'
 import { Chord, Note } from 'tonal'
 import NoteChooser from './NoteChooser.js'
 import { planFills } from './Fills.js'
+import Memory from './Memory.js'
 import musicUtils from './musicUtils.js'
 import utils from './utils.js'
 import { scaled } from './Knobs.js'
@@ -49,11 +50,42 @@ class Bar {
 
   prepNextBar() {
     this.nextBar = this.line.nextBar(this.barIdx)
-    if (this.nextBar) {
-      this.nextChord = this.nextBar.chord
-    } else {
-      this.nextChord = this.line.section.song.nextChorusChord || this.lastChord
-    }
+    this.nextChord = this.followingChord()
+  }
+
+  // the chord after this bar
+  followingChord() {
+    const next = this.line.nextBar(this.barIdx)
+    return next ? next.chord : (this.line.section.song.nextChorusChord || this.lastChord)
+  }
+
+  get memory() {
+    return this.line.section.song.memory
+  }
+
+  // this bar's harmony, as the memory files it
+  get memoryKey() {
+    return Memory.key(this.chords, this.followingChord())
+  }
+
+  // a beat 1 for the next bar that was played there before, if the next
+  // bar walks over harmony already heard
+  rememberedLanding() {
+    const next = this.nextBar
+    if (!this.memory || !next || next.twoFeel) { return null }
+    const midi = this.memory.landing(next.memoryKey)
+    const first = Note.midi(this.chosenFirstNote)
+    return midi !== null && Math.abs(midi - first) <= 12 ? Note.fromMidi(midi) : null
+  }
+
+  // play a bar again that was played on this harmony from this note before
+  replay() {
+    const figure = this.memory && this.memory.recall(this.memoryKey, Note.midi(this.chosenFirstNote))
+    if (!figure) { return false }
+    this.replayed = true
+    this.nextBarFirstNoteCallback(Note.fromMidi(figure.next))
+    this.setBeats([this.chosenFirstNote, ...figure.midis.slice(1).map(m => Note.fromMidi(m))])
+    return true
   }
 
   spell(note, beatIdx) {
@@ -77,36 +109,44 @@ class Bar {
     )
     this.noteChooser.barChords = this.chords
     this.chosenFirstNote = this.firstNote()
+    this.noteChooser.landing = this.rememberedLanding()
     if (this.twoFeel) { return this.chooseTwoFeel() }
-    if (this.isPedal()) { return this.choosePedal() }
+    if (this.isPedal() && this.choosePedal()) { return }
+    if (!this.replay()) { this.chooseWalk() }
+    const midis = this.beats.map(b => Note.midi(b.note))
+    this.shape = [midis[1] - midis[0], midis[2] - midis[1], midis[3] - midis[2]].join(',')
+    planFills(this)
+    if (this.memory) { this.memory.remember(this.memoryKey, this, midis, Note.midi(this.nextBarFirstNote)) }
+  }
 
+  // beats 2-4 scored and picked toward the next bar
+  chooseWalk() {
     // shapes of the last two bars, so this bar doesn't copy them
     const recentShapes = [this.lastBar, this.lastBar && this.lastBar.lastBar]
       .filter(b => b && b.shape).map(b => b.shape)
     const [beat2, beat3, beat4] = this.noteChooser.chooseBeats(recentShapes, this.resolution())
     this.cell = this.noteChooser.pick && this.noteChooser.pick.cell
     this.setBeats([this.chosenFirstNote, beat2, beat3, beat4])
-    const midis = this.beats.map(b => Note.midi(b.note))
-    this.shape = [midis[1] - midis[0], midis[2] - midis[1], midis[3] - midis[2]].join(',')
-    planFills(this)
   }
 
-  // How strongly the next bar's beat 1 is an arrival: { change, resolve }
-  // where resolve is 2 coming home (the next section or chorus, or a
-  // dominant resolving to the tonic), 1 for any other dominant resolving
-  // (down a 5th, or down a half step from a tritone sub), else 0.
+  // How strongly the next bar's beat 1 is an arrival: { change, resolve,
+  // motion } where motion is how far the next root lies above this one (in
+  // semitones, 0-11) and resolve is 2 coming home (the next section or
+  // chorus, or a dominant resolving to the tonic), 1 for any other dominant
+  // resolving (down a 5th, or down a half step from a tritone sub), else 0.
   resolution() {
     const from = this.lastChord
     const to = this.nextChord
     const change = from !== to
-    if (!change) { return { change, resolve: 0 } }
-    const sectionStart = !this.nextBar || this.nextBar.line.section !== this.line.section
     const c = Chord.get(from)
     const down = (Note.chroma(c.tonic) - Note.chroma(Chord.get(to).tonic) + 12) % 12
+    const motion = (12 - down) % 12
+    if (!change) { return { change, resolve: 0, motion } }
+    const sectionStart = !this.nextBar || this.nextBar.line.section !== this.line.section
     const resolving = c.type === 'dominant seventh' && (down === 7 || down === 1)
     const toTonic = Note.chroma(Chord.get(to).tonic) === Note.chroma(this.key)
-    if (sectionStart || (resolving && toTonic)) { return { change, resolve: 2 } }
-    return { change, resolve: resolving ? 1 : 0 }
+    if (sectionStart || (resolving && toTonic)) { return { change, resolve: 2, motion } }
+    return { change, resolve: resolving ? 1 : 0, motion }
   }
 
   // a dominant that lasts into the next bar, starting on its root
@@ -118,14 +158,17 @@ class Bar {
     return utils.chooseWithProbabilities(['yes', 'no'], [chance, 100 - chance]) === 'yes'
   }
 
-  // root on 1, 2 and 3, then a half step into the next bar
+  // root on 1, 2 and 3, then a half step into the next bar; false (and the
+  // bar walks instead) if that half step is more than a 5th from the root
   choosePedal() {
-    this.pedal = true
     const target = this.noteChooser.runNextBarFirstNote()
     const first = this.chosenFirstNote
     const fromBelow = Note.midi(target) > Note.midi(first)
     const approach = musicUtils.foldIntoRange(Note.transpose(target, fromBelow ? '-2m' : '2m'))
+    if (Math.abs(Note.midi(approach) - Note.midi(first)) > 7) { return false }
+    this.pedal = true
     this.setBeats([first, first, first, approach])
+    return true
   }
 
   // half notes: beat 1, then the 5th or 3rd (or the second chord's root) on
@@ -174,7 +217,8 @@ class Bar {
   // fresh beats and note choices, keeping the chords, direction and links
   regenerate() {
     this.beats = []
-    this.pedal = false
+    this.pedal = this.replayed = false
+    if (this.memory) { this.memory.forget(this) }
     this.shape = this.cell = this.nextBarFirstNote = this.mood = undefined
     this.generate()
   }

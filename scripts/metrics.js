@@ -8,7 +8,7 @@ import SongWriter from '../src/lib/SongWriter.js'
 import utils from '../src/lib/utils.js'
 import { articulate } from '../src/lib/Articulation.js'
 
-export const RANGE = { low: Note.midi('E1'), high: Note.midi('D3') }
+export const RANGE = { low: Note.midi('E1'), high: Note.midi('F3') }
 
 // the "inside" notes over a chord: chord tones plus its standard mode
 const modeForType = {
@@ -153,6 +153,54 @@ function rhythm(songWriters) {
     shortNotes: r(c.shorts, c.mains),
     lllsBars: r(c.lllsBars, c.bars),
     sameShortPattern: r(c.sameArt, c.artPairs)
+  }
+}
+
+// Story: what makes a line sound like it belongs to the tune. Measured per
+// tune (the choruses played in one key): coming back to harmony already
+// heard (a bar's chords and the chord after it), how often the bar is
+// played again note for note, or lands on the same beat 1. Also the stock
+// figure of hard bop walking, root then a chromatic climb up a 4th
+// (D E F F# into G), over bars that start on the root and move up a 4th.
+function story(songWriters) {
+  const c = { heard: 0, sameBar: 0, sameBeat1: 0, up4: 0, up4Figure: 0, leaps: 0, intervals: 0, beat2: 0, bars: 0 }
+  let seen = null
+  songWriters.forEach(sw => {
+    if (sw.chorusInKey === 0 || !seen) { seen = new Map() }
+    const bars = sw.bars()
+    bars.forEach((bar, i) => {
+      if (bar.twoFeel || bar.pedal) { return }
+      const midis = bar.beats.map(b => Note.midi(b.note))
+      c.bars++
+      if (Chord.get(bar.chordAt(1)).notes.map(Note.chroma).includes(midis[1] % 12)) { c.beat2++ }
+      for (let k = 1; k < 4; k++) {
+        c.intervals++
+        if (Math.abs(midis[k] - midis[k - 1]) >= 5) { c.leaps++ }
+      }
+      const next = bars[i + 1]
+      const key = `${bar.chords.join(' ')}>${next ? next.chords.join(' ') : ''}`
+      const before = seen.get(key)
+      if (before) {
+        c.heard++
+        if (before.some(m => m.join() === midis.join())) { c.sameBar++ }
+        if (before.some(m => m[0] === midis[0])) { c.sameBeat1++ }
+      }
+      seen.set(key, [...(before || []), midis])
+      if (!bar.chord2 && bar.nextBarFirstNote && Note.chroma(Chord.get(bar.chord).tonic) === midis[0] % 12 &&
+          (rootChroma(bar.nextChord) - midis[0] % 12 + 12) % 12 === 5) {
+        c.up4++
+        const t = Note.midi(bar.nextBarFirstNote) - midis[0]
+        if (midis[1] - midis[0] === 2 && midis[2] - midis[0] === 3 && midis[3] - midis[0] === 4 && t === 5) { c.up4Figure++ }
+      }
+    })
+  })
+  const r = (a, b) => b ? a / b : 0
+  return {
+    beat2ChordTone: r(c.beat2, c.bars),
+    leapsInBar: r(c.leaps, c.intervals),
+    recallSameBar: r(c.sameBar, c.heard),
+    recallSameBeat1: r(c.sameBeat1, c.heard),
+    stockFigureUp4: r(c.up4Figure, c.up4)
   }
 }
 
@@ -313,6 +361,7 @@ export function analyze(songWriters) {
     beat3OnTarget: r(c.beat3OnTarget, c.changeApproaches),
     sameChordRoot: r(c.sameChordRoot, c.sameChordBars),
     ...rhythm(songWriters),
+    ...story(songWriters),
     intervalHistogram: Object.fromEntries(
       Object.entries(c.intervalHistogram).map(([k, v]) => [k, r(v, c.intervals)]))
   }

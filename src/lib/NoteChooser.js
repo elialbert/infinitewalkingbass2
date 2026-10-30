@@ -5,9 +5,13 @@ import WalkScorer from './WalkScorer.js'
 
 // bar-start notes below/above these turn the line around
 const TURN_UP_BELOW = Note.midi('A1')
-const TURN_DOWN_ABOVE = Note.midi('Bb2')
+const TURN_DOWN_ABOVE = Note.midi('C3')
 // beat 1 when the chord carries on: root, 5th, 3rd or a scale note
-const SAME_CHORD_TARGETS = [30, 30, 25, 15]
+// (FiloBass lands 35 / 38 / 6 / 21%; the root is set lower here because
+// remembered landings favor it), and the percent chance a root comes back
+// on the same note rather than an octave away (about 60% there)
+const SAME_CHORD_TARGETS = [28, 47, 6, 19]
+const SAME_ROOT_SAME_NOTE = 60
 
 class NoteChooser {
   constructor(chord, nextChord, lastBarNextBarFirstNote, notes, key,
@@ -69,7 +73,10 @@ class NoteChooser {
       this.direction = 'down'
     }
 
-    if (this.chord !== this.nextChord) {
+    if (this.landing) {
+      // somewhere this bar's harmony has led before
+      nextBarFirstNote = this.landing
+    } else if (this.chord !== this.nextChord) {
       const options = [newNotes[0], newNotes[1], newNotes[2]]
       const pc = utils.chooseWithProbabilities(options, [80, 10, 10])
       nextBarFirstNote = this.placeInDirection(pc, this.chosenFirstNote, true)
@@ -80,7 +87,8 @@ class NoteChooser {
 
       if (sameChordChoice !== 'scale') {
         let noteIndex = sameChordChoice === 'root' ? 0 : sameChordChoice === 'fifth' ? 2 : 1
-        nextBarFirstNote = this.placeInDirection(newNotes[noteIndex], this.chosenFirstNote, false)
+        const same = sameChordChoice === 'root' && utils.random() * 100 < SAME_ROOT_SAME_NOTE
+        nextBarFirstNote = this.placeInDirection(newNotes[noteIndex], this.chosenFirstNote, same)
       } else {
         let noteRange
         if (this.direction == 'up') {

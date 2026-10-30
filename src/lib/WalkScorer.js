@@ -42,18 +42,41 @@ export const CELLS = {
   '1-3-2-1': ['1', '3', '2', '1']
 }
 
-// score weights; the softmax temperature sets how adventurous the pick is
+// Stock figures: beats 2, 3 and 4 and the next bar's beat 1, in semitones
+// above beat 1, by how far the next chord's root lies above this chord's
+// (0 when the chord carries on). From FiloBass bars that start on the root;
+// the value is the percent of those bars playing the figure. Most leave the
+// root and then walk chromatically into the arrival (D E F F# into G7).
+export const FIGURES = {
+  0: { '4,5,6>7': 8.8, '-2,-3,-4>-5': 8.3, '-8,-7,-6>-5': 5.2, '-1,-2,-3>-5': 3.6 },
+  2: { '7,12,13>14': 5.7, '2,3,1>2': 5.2, '-1,0,1>2': 4.5, '-8,-3,4>2': 3.5 },
+  5: { '2,3,4>5': 18.2, '1,2,4>5': 5.7, '-2,-3,-5>-7': 4.0 },
+  6: { '-1,-3,-5>-6': 6.5, '-2,-5,-2>-6': 6.0, '-8,-3,-5>-6': 4.0 },
+  7: { '-2,-3,-4>-5': 13.5, '1,2,6>7': 11.6, '4,5,6>7': 8.4, '1,2,-4>-5': 5.1 },
+  9: { '0,-1,-2>-3': 8.9, '0,-2,-2>-3': 7.0, '2,0,-2>-3': 6.2, '0,-1,-8>-3': 3.1, '2,7,10>9': 3.1 },
+  10: { '7,12,11>10': 19.7, '-1,0,-1>-2': 9.1, '-5,-3,-7>-2': 7.6 },
+  11: { '-9,-5,0>-1': 7.3, '3,2,0>-1': 6.5, '7,4,0>-1': 4.4, '4,7,12>11': 4.1, '-5,-8,-12>-13': 4.1, '-8,-5,0>-1': 3.9 }
+}
+
+// score weights; the softmax temperature sets how adventurous the pick is.
+// Tuned against FiloBass (see scripts/analyze.js): real lines put chord
+// tones on beat 2, arpeggiate (leaps between chord tones, the 3rd to the
+// 7th included), and turn around in a third of their bars, rather than
+// walking scales.
 export const WEIGHTS = {
   temperature: 0.8,
-  beat3ChordTone: 0.6,
+  beat3ChordTone: 0.3,
   beat3Chromatic: -0.5,
-  beat2ChordTone: 0.5,
-  beat2Inside: 0.5,
+  beat2ChordTone: 0.4,
+  beat2Inside: 0.1,
+  // a leap of a 4th or more from one chord tone to another: an arpeggio,
+  // not a jump
+  chordToneLeap: 1,
   approachHalfStep: 1.7,
   approachWholeStep: 1.0,
   // walking into a chord change: beats 3 and 4 both by half step, and not
   // giving the arrival away by playing its note on beat 3
-  doubleChromatic: 0.5,
+  doubleChromatic: 0.3,
   beat3OnTarget: -1.5,
   // extra pull toward a half step (and a chromatic run in from beat 2) when
   // the bar resolves: per level of `resolve`, 1 for a V-I, 2 for home
@@ -63,19 +86,21 @@ export const WEIGHTS = {
   approachFourthFifth: 0.6,
   approachThird: 0.3,
   approachLeap: -3,
-  step: 0.9,
-  third: 0.3,
-  tritone: -1,
+  step: 0.6,
+  third: -0.1,
+  tritone: 0.4,
   leapOverFifth: -1.5,
-  octave: -0.5,
-  repeat: -2,
+  octave: -0.1,
+  repeat: -1.6,
   stepwiseRun: 0,
-  reversal: -1.2,
+  reversal: -0.4,
   extraLeap: -1.5,
   sameShape: -1.5,
   splitRoot: 2.5,
   cellStart: 1,
-  cellWhole: 0.5
+  cellWhole: 0.5,
+  // per 10% of FIGURES share
+  figure: 1
 }
 
 const APPROACHES = [-1, 1, -2, 2, -5, 7, -7, 5, -3, 3, -4, 4]
@@ -168,7 +193,8 @@ class WalkScorer {
   }
 
   // context: { change: the next bar brings a new chord, resolve: 0 none,
-  // 1 a dominant resolving, 2 coming home (section start or tonic) }
+  // 1 a dominant resolving, 2 coming home (section start or tonic),
+  // motion: semitones from this chord's root up to the next chord's }
   score(first, cand, target, recentShapes, context = {}) {
     const W = WEIGHTS
     const resolve = context.resolve || 0
@@ -203,8 +229,9 @@ class WalkScorer {
     }
 
     const steps = [b2 - first, b3 - b2, b4 - b3]
-    steps.forEach(d => {
+    steps.forEach((d, i) => {
       const a = Math.abs(d)
+      if (a >= 5 && this.isChordTone(notes[i], i) && this.isChordTone(notes[i + 1], i + 1)) { s += W.chordToneLeap }
       if (a === 0) { s += W.repeat }
       else if (a <= 2) { s += W.step }
       else if (a <= 4) { s += W.third }
@@ -221,6 +248,12 @@ class WalkScorer {
 
     const shape = steps.join(',')
     if (recentShapes.includes(shape)) { s += W.sameShape }
+
+    // context.motion: semitones from this chord's root up to the next one's
+    if (!this.split && context.motion !== undefined && first % 12 === this.rootChroma) {
+      const share = (FIGURES[context.motion] || {})[`${b2 - first},${b3 - first},${b4 - first}>${target - first}`]
+      if (share) { s += W.figure * share / 10 }
+    }
 
     const [cell, whole] = this.matchCell(notes)
     if (cell) { s += W.cellStart + (whole ? W.cellWhole : 0) }

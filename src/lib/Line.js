@@ -18,7 +18,7 @@ const ARC_WEIGHTS = {
   high: [5, 0, 25, 25, 0, 45]
 }
 const LOW_START = Note.midi('A1')
-const HIGH_START = Note.midi('A2')
+const HIGH_START = Note.midi('B2')
 
 class Line {
   constructor(section, lineIdx) {

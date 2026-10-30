@@ -14,6 +14,12 @@ let setRandom = function(val) {
   utils.setRandom(() => val)
 }
 
+// draws these values in turn, then repeats the last
+let setSequence = function(vals) {
+  let i = 0
+  utils.setRandom(() => vals[Math.min(i++, vals.length - 1)])
+}
+
 afterEach(() => utils.setRandom(null))
 
 it('passes through first note', () => {
@@ -38,8 +44,9 @@ it('next bar first note', () => {
   expect(nc.firstNote()).toEqual('C2')
   expect(nc.runNextBarFirstNote()).toEqual('B1')
 
-  // random=0.2 -> root; D1 is below the range so it goes up to D3 instead
-  setRandom(0.2)
+  // (the first draw picks the scale) 0.2 -> root, 0.9 -> an octave away rather than the same note; D1 is
+  // below the range so it goes up to D3 instead
+  setSequence([0.2, 0.2, 0.9])
   nc = prep('Dm7', 'Dm7', null, 'C', 'down')
   expect(nc.firstNote()).toEqual('D2')
   expect(nc.runNextBarFirstNote()).toEqual('D3')
@@ -53,19 +60,28 @@ it('builds scales on the chord root, not the key', () => {
 })
 
 it('same-chord continuation prefers root on beat 1', () => {
-  // With random=0.1, chooseWithProbabilities([60,20,10,10]) hits 'root' (sum 60 >= 11)
-  setRandom(0.1)
+  // (the first draw picks the scale) 0.1 -> chooseWithProbabilities([28,47,6,19]) hits 'root' (28 >= 11);
+  // 0.9 -> an octave away rather than the same note
+  setSequence([0.1, 0.1, 0.9])
   let nc = prep('C7', 'C7', 'C2', 'C', 'up')
   nc.firstNote()
   expect(nc.runNextBarFirstNote()).toEqual('C3')
 
+  setSequence([0.1, 0.1, 0.9])
   nc = prep('Dm7', 'Dm7', 'D3', 'C', 'down')
   nc.firstNote()
   expect(nc.runNextBarFirstNote()).toEqual('D2')
 })
 
-it('turns down near the top of the range', () => {
+it('same-chord root can come back on the same note', () => {
   setRandom(0.1)
+  let nc = prep('C7', 'C7', 'C2', 'C', 'up')
+  nc.firstNote()
+  expect(nc.runNextBarFirstNote()).toEqual('C2')
+})
+
+it('turns down near the top of the range', () => {
+  setSequence([0.1, 0.1, 0.9])
   // C3 is high for a walking line, so even though the hint is up it heads down
   let nc = prep('C7', 'C7', 'C3', 'C', 'up')
   nc.firstNote()
@@ -74,7 +90,7 @@ it('turns down near the top of the range', () => {
 })
 
 it('same-chord continuation can choose fifth', () => {
-  // With random=0.45, chooseWithProbabilities([30,30,25,15]) → randVal=46 → 'fifth'
+  // With random=0.45, chooseWithProbabilities([28,47,6,19]) → randVal=46 → 'fifth'
   setRandom(0.45)
   let nc = prep('C7', 'C7', 'C2', 'C', 'up')
   nc.firstNote()

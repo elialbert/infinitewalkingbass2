@@ -4,7 +4,7 @@ import { Chord, Note, Progression, Scale } from 'tonal'
 // Sounding range of an upright bass walking line. Playback can transpose
 // (e.g. up an octave for small speakers) without changing the line itself.
 const RANGE_LOW = 'E1'
-const RANGE_HIGH = 'D3'
+const RANGE_HIGH = 'F3'
 const DEFAULT_OCTAVE = '2'
 
 // The scale a bassist "hears" over each chord quality, built on the chord's

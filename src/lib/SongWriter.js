@@ -1,6 +1,7 @@
 import Section from './Section.js'
 import musicUtils from './musicUtils.js'
 import Forms, { FORMS } from './Forms.js'
+import Memory from './Memory.js'
 import { Chord, Note } from 'tonal'
 
 const KEYS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'Db', 'Ab', 'Eb', 'Bb', 'F']
@@ -22,6 +23,8 @@ class SongWriter {
       this.chordProgB = musicUtils.chooseProgression(KEYS[this.keyIdx])
     }
     this.key = KEYS[this.keyIdx]
+    // what has been played on this tune, kept until the key changes
+    this.memory = this.memory || new Memory()
     this.chorusesInKey = FORMS[this.formName].choruses
     this.next = this.planNext()
     this.beatCounter = 0
@@ -31,7 +34,7 @@ class SongWriter {
   planNext() {
     if (this.chorusInKey + 1 < this.chorusesInKey) {
       return { keyIdx: this.keyIdx, formName: this.formName, chorusInKey: this.chorusInKey + 1,
-        chordProgA: this.chordProgA, chordProgB: this.chordProgB }
+        chordProgA: this.chordProgA, chordProgB: this.chordProgB, memory: this.memory }
     }
     const keyIdx = (this.keyIdx + 1) % KEYS.length
     return { keyIdx, formName: Forms.chooseForm(), chorusInKey: 0,
